@@ -629,7 +629,7 @@ async function loadSettings() {
   const page = document.querySelector(`[data-page="settings"]`);
   if (!page) return;
   
-  loadSettingsForm();
+  loadGeneralSettings();
   loadPopupSettings();
   loadSocialLinks();
   loadContactInfo();
