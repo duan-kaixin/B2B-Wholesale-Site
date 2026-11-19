@@ -337,10 +337,15 @@ app.get('/', async (c) => {
         const extra = JSON.parse(config.extra_data);
         ldData = { ...ldData, ...extra };
       }
+      if (!ldData['@type'] && config.page_type) ldData['@type'] = config.page_type;
       if (config.name) ldData.name = config.name;
       if (config.description) ldData.description = config.description;
       if (config.url) ldData.url = config.url;
       if (config.logo) ldData.logo = { url: config.logo };
+      if (config.same_as) {
+        const links = String(config.same_as).split(/[\n,]/).map((x: string) => x.trim()).filter(Boolean);
+        if (links.length) ldData.sameAs = links;
+      }
       return `<script type="application/ld+json">${JSON.stringify(ldData)}</script>`;
     } catch (e) {
       return '';

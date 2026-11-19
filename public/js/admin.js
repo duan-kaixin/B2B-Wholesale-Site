@@ -195,6 +195,12 @@ function switchPage(page) {
   else if (page === 'inquiries') loadInquiries();
   else if (page === 'leads') loadLeads();
   else if (page === 'settings') loadSettings();
+  else if (page === 'slides') {
+    loadSlides();
+    $('#add-slide-btn').off('click').on('click', () => showSlideModal());
+  }
+  else if (page === 'seo') loadJsonLdConfigs();
+  else if (page === 'robots') loadRobotsConfigs();
   else if (page === 'ai-chat') loadAiChatSettings();
 }
 
@@ -222,12 +228,12 @@ async function loadProducts() {
   if (!container) return;
   
   try {
-    const res = await fetch(`/api/products?page=1&limit=50`, {
+    const res = await fetch('/api/admin/list/products', {
       headers: { 'Authorization': `Basic ${credentials}` }
     });
     const data = await res.json();
     if (data.success) {
-      renderProductsTable(data.data.items);
+      renderProductsTable(data.data);
     }
   } catch (err) {
     console.error('Failed to load products');
@@ -274,7 +280,7 @@ async function loadCategories() {
   if (!container) return;
   
   try {
-    const res = await fetch('/api/categories', {
+    const res = await fetch('/api/admin/list/categories', {
       headers: { 'Authorization': `Basic ${credentials}` }
     });
     const data = await res.json();
@@ -309,7 +315,7 @@ function renderCategoriesTable(categories) {
             <td>${c.slug}</td>
             <td>${c.sort_order}</td>
             <td>
-              <button class="btn btn-sm btn-warning">Edit</button>
+              <button class="btn btn-sm btn-warning" onclick="editCategory(${c.id})">Edit</button>
               <button class="btn btn-sm btn-danger" onclick="deleteCategory(${c.id})">Delete</button>
             </td>
           </tr>
@@ -324,7 +330,7 @@ async function loadSolutions() {
   if (!container) return;
   
   try {
-    const res = await fetch('/api/solutions', {
+    const res = await fetch('/api/admin/list/solutions', {
       headers: { 'Authorization': `Basic ${credentials}` }
     });
     const data = await res.json();
@@ -372,7 +378,7 @@ async function loadCases() {
   if (!container) return;
   
   try {
-    const res = await fetch('/api/cases', {
+    const res = await fetch('/api/admin/list/cases', {
       headers: { 'Authorization': `Basic ${credentials}` }
     });
     const data = await res.json();
@@ -422,12 +428,12 @@ async function loadNews() {
   if (!container) return;
   
   try {
-    const res = await fetch('/api/news?limit=50', {
+    const res = await fetch('/api/admin/list/news', {
       headers: { 'Authorization': `Basic ${credentials}` }
     });
     const data = await res.json();
     if (data.success) {
-      renderNewsTable(data.data.items);
+      renderNewsTable(data.data);
     }
   } catch (err) {
     console.error('Failed to load news');
@@ -472,7 +478,7 @@ async function loadPages() {
   if (!container) return;
   
   try {
-    const res = await fetch('/api/pages', {
+    const res = await fetch('/api/admin/list/pages', {
       headers: { 'Authorization': `Basic ${credentials}` }
     });
     const data = await res.json();
@@ -1128,7 +1134,7 @@ window.showAddProductModal = function() {
 
 window.editProduct = async function(id) {
   try {
-    const res = await fetch(`/api/products/${id}`, {
+    const res = await fetch(`/api/admin/item/products/${id}`, {
       headers: { 'Authorization': `Basic ${credentials}` }
     });
     const data = await res.json();
@@ -1205,7 +1211,7 @@ function showProductModal(product = null) {
   `;
   
   $('body').append(modalHtml);
-  loadCategoriesForSelect();
+  loadCategoriesForSelect(product);
   
   $('#product-form').off('submit').on('submit', async (e) => {
     e.preventDefault();
@@ -1263,17 +1269,18 @@ window.closeProductModal = function() {
   $('#product-modal').remove();
 };
 
-async function loadCategoriesForSelect() {
+async function loadCategoriesForSelect(product = null) {
   try {
     const res = await fetch('/api/categories', {
       headers: { 'Authorization': `Basic ${credentials}` }
     });
     const data = await res.json();
     if (data.success) {
-      const options = data.data.items.map((c) => 
+      const options = (Array.isArray(data.data) ? data.data : (data.data.items || [])).map((c) => 
         `<option value="${c.id}">${c.name}</option>`
       ).join('');
       $('select[name="category_id"]').append(options);
+      if (product && product.category_id) $('select[name="category_id"]').val(String(product.category_id));
     }
   } catch (err) {
     console.error('Failed to load categories');
@@ -1311,6 +1318,22 @@ window.deleteCategory = async function(id) {
 // Category CRUD Modal Functions
 window.showAddCategoryModal = function() {
   showCategoryModal();
+};
+
+window.editCategory = async function(id) {
+  try {
+    const res = await fetch(`/api/admin/item/categories/${id}`, {
+      headers: { 'Authorization': `Basic ${credentials}` }
+    });
+    const data = await res.json();
+    if (data.success) {
+      showCategoryModal(data.data);
+    } else {
+      alert(data.error || 'Failed to load category');
+    }
+  } catch (err) {
+    alert('Failed to load category');
+  }
 };
 
 function showCategoryModal(category = null) {
@@ -1360,7 +1383,7 @@ function showCategoryModal(category = null) {
   `;
   
   $('body').append(modalHtml);
-  loadCategoriesForParentSelect();
+  loadCategoriesForParentSelect(category);
   
   $('#category-form').off('submit').on('submit', async (e) => {
     e.preventDefault();
@@ -1401,17 +1424,19 @@ window.closeCategoryModal = function() {
   $('#category-modal').remove();
 };
 
-async function loadCategoriesForParentSelect() {
+async function loadCategoriesForParentSelect(current = null) {
   try {
     const res = await fetch('/api/categories', {
       headers: { 'Authorization': `Basic ${credentials}` }
     });
     const data = await res.json();
     if (data.success) {
-      const options = data.data.items.map((c) => 
-        `<option value="${c.id}">${c.name}</option>`
-      ).join('');
+      const options = (Array.isArray(data.data) ? data.data : (data.data.items || []))
+        .filter((c) => !current || c.id !== current.id)
+        .map((c) => `<option value="${c.id}">${c.name}</option>`)
+        .join('');
       $('select[name="parent_id"]').append(options);
+      if (current && current.parent_id) $('select[name="parent_id"]').val(String(current.parent_id));
     }
   } catch (err) {
     console.error('Failed to load categories');
@@ -1543,7 +1568,7 @@ window.showAddSolutionModal = function() {
 
 window.editSolution = async function(id) {
   try {
-    const res = await fetch(`/api/solutions/${id}`, {
+    const res = await fetch(`/api/admin/item/solutions/${id}`, {
       headers: { 'Authorization': `Basic ${credentials}` }
     });
     const data = await res.json();
@@ -1659,7 +1684,7 @@ window.showAddCaseModal = function() {
 
 window.editCase = async function(id) {
   try {
-    const res = await fetch(`/api/cases/${id}`, {
+    const res = await fetch(`/api/admin/item/cases/${id}`, {
       headers: { 'Authorization': `Basic ${credentials}` }
     });
     const data = await res.json();
@@ -1787,7 +1812,7 @@ window.showAddNewsModal = function() {
 
 window.editNews = async function(id) {
   try {
-    const res = await fetch(`/api/news/${id}`, {
+    const res = await fetch(`/api/admin/item/news/${id}`, {
       headers: { 'Authorization': `Basic ${credentials}` }
     });
     const data = await res.json();
@@ -1899,7 +1924,7 @@ window.closeNewsModal = function() {
 // Page CRUD Modal Functions
 window.editPage = async function(id) {
   try {
-    const res = await fetch(`/api/pages/${id}`, {
+    const res = await fetch(`/api/admin/item/pages/${id}`, {
       headers: { 'Authorization': `Basic ${credentials}` }
     });
     const data = await res.json();
@@ -2087,4 +2112,273 @@ window.saveTranslationSettings = async function() {
   } catch (err) {
     alert('Failed to save translation settings');
   }
+};
+
+
+// ==================== 通用小工具 ====================
+function escHtml(v) {
+  return String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+async function adminRequest(url, method = 'GET', body = null) {
+  const opts = { method, headers: { 'Authorization': `Basic ${credentials}` } };
+  if (body !== null) {
+    opts.headers['Content-Type'] = 'application/json';
+    opts.body = JSON.stringify(body);
+  }
+  const res = await fetch(url, opts);
+  let data = {};
+  try { data = await res.json(); } catch (e) {}
+  if (!res.ok || data.success === false) {
+    throw new Error(data.error || `Request failed (${res.status})`);
+  }
+  return data;
+}
+
+function openSimpleModal(id, title, fieldsHtml, onSubmit) {
+  $(`#${id}`).remove();
+  $('body').append(`
+    <div id="${id}" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-lg p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <h3 class="text-xl font-bold mb-4">${title}</h3>
+        <form id="${id}-form">
+          <div class="space-y-4">${fieldsHtml}</div>
+          <div class="flex gap-4 mt-6">
+            <button type="submit" class="btn btn-primary">${t('common.save')}</button>
+            <button type="button" class="btn" onclick="$('#${id}').remove()">${t('common.cancel')}</button>
+          </div>
+        </form>
+      </div>
+    </div>`);
+  $(`#${id}-form`).on('submit', async (e) => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const data = Object.fromEntries(fd);
+    $(e.target).find('input[type=checkbox]').each(function () { data[this.name] = this.checked ? 1 : 0; });
+    try {
+      await onSubmit(data);
+      alert(t('common.saveSuccess'));
+      $(`#${id}`).remove();
+    } catch (err) {
+      alert(err.message || t('common.error'));
+    }
+  });
+}
+
+function fieldInput(label, name, value, type = 'text', extra = '') {
+  return `<div><label class="block font-medium mb-1">${label}</label>
+    <input type="${type}" name="${name}" value="${escHtml(value)}" class="w-full px-3 py-2 border rounded" ${extra}></div>`;
+}
+function fieldTextarea(label, name, value, rows = 3, extra = '') {
+  return `<div><label class="block font-medium mb-1">${label}</label>
+    <textarea name="${name}" rows="${rows}" class="w-full px-3 py-2 border rounded" ${extra}>${escHtml(value)}</textarea></div>`;
+}
+function fieldCheckbox(label, name, checked) {
+  return `<div><label class="flex items-center gap-2"><input type="checkbox" name="${name}" ${checked ? 'checked' : ''}><span>${label}</span></label></div>`;
+}
+
+// ==================== 幻灯片 ====================
+async function loadSlides() {
+  const container = document.getElementById('slide-table');
+  if (!container) return;
+  try {
+    const data = await adminRequest('/api/admin/list/slides');
+    const items = data.data || [];
+    if (!items.length) { container.innerHTML = `<p class="text-gray-500">${t('common.noData')}</p>`; return; }
+    container.innerHTML = `
+      <table>
+        <thead><tr><th>ID</th><th>${t('common.image')}</th><th>${t('common.title')}</th><th>${t('common.sortOrder')}</th><th>${t('common.status')}</th><th>${t('common.actions')}</th></tr></thead>
+        <tbody>
+          ${items.map(s => `
+            <tr>
+              <td>${s.id}</td>
+              <td>${s.image_url ? `<img src="${escHtml(s.image_url)}" style="width:80px;height:45px;object-fit:cover;border-radius:4px">` : '-'}</td>
+              <td>${escHtml(s.title)}</td>
+              <td>${s.sort_order ?? 0}</td>
+              <td>${s.is_active ? t('common.active2') : t('common.inactive2')}</td>
+              <td>
+                <button class="btn btn-sm btn-warning" onclick="editSlide(${s.id})">${t('common.edit')}</button>
+                <button class="btn btn-sm btn-danger" onclick="deleteSlide(${s.id})">${t('common.delete')}</button>
+              </td>
+            </tr>`).join('')}
+        </tbody>
+      </table>`;
+  } catch (err) {
+    container.innerHTML = `<p class="text-red-600">${escHtml(err.message)}</p>`;
+  }
+}
+
+function showSlideModal(slide = null) {
+  const fields =
+    fieldInput(t('slides.slideTitle'), 'title', slide?.title, 'text', 'required') +
+    fieldInput(t('slides.subtitle'), 'subtitle', slide?.subtitle) +
+    fieldTextarea(t('slides.slideDescription'), 'description', slide?.description, 2) +
+    fieldInput(t('slides.slideImage') + ' (URL)', 'image_url', slide?.image_url) +
+    fieldInput(t('slides.linkUrl'), 'link_url', slide?.link_url) +
+    fieldInput(t('slides.linkText'), 'link_text', slide?.link_text) +
+    fieldInput(t('common.sortOrder'), 'sort_order', slide?.sort_order ?? 0, 'number') +
+    fieldCheckbox(t('common.active'), 'is_active', slide ? slide.is_active : 1);
+  openSimpleModal('slide-modal', slide ? t('slides.editSlide') : t('slides.addSlide'), fields, async (data) => {
+    data.sort_order = parseInt(data.sort_order) || 0;
+    if (slide) await adminRequest(`/api/slides/${slide.id}`, 'PUT', data);
+    else await adminRequest('/api/slides', 'POST', data);
+    loadSlides();
+  });
+}
+
+window.editSlide = async function (id) {
+  try {
+    const data = await adminRequest(`/api/admin/item/slides/${id}`);
+    showSlideModal(data.data);
+  } catch (err) { alert(err.message); }
+};
+
+window.deleteSlide = async function (id) {
+  if (!confirm(t('common.confirmDelete'))) return;
+  try { await adminRequest(`/api/slides/${id}`, 'DELETE'); loadSlides(); }
+  catch (err) { alert(err.message); }
+};
+
+// ==================== SEO / JSON-LD ====================
+async function loadJsonLdConfigs() {
+  const container = document.getElementById('jsonld-form');
+  if (!container) return;
+  try {
+    const data = await adminRequest('/api/admin/list/jsonld');
+    const items = data.data || [];
+    container.innerHTML = `
+      <div class="mb-4 text-sm text-gray-600">这些配置会以 JSON-LD 结构化数据的形式输出到首页，帮助 Google 识别你的公司信息。通常只需添加一条 Organization 即可。</div>
+      <button class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 mb-4" onclick="showJsonLdModal()">${t('seo.addConfig')}</button>
+      ${items.length ? `
+      <table>
+        <thead><tr><th>ID</th><th>${t('seo.schemaType')}</th><th>${t('seo.name')}</th><th>URL</th><th>${t('common.status')}</th><th>${t('common.actions')}</th></tr></thead>
+        <tbody>
+          ${items.map(c => `
+            <tr>
+              <td>${c.id}</td>
+              <td>${escHtml(c.page_type)}</td>
+              <td>${escHtml(c.name || '-')}</td>
+              <td>${escHtml(c.url || '-')}</td>
+              <td>${c.is_active ? t('common.active2') : t('common.inactive2')}</td>
+              <td>
+                <button class="btn btn-sm btn-warning" onclick="editJsonLd(${c.id})">${t('common.edit')}</button>
+                <button class="btn btn-sm btn-danger" onclick="deleteJsonLd(${c.id})">${t('common.delete')}</button>
+              </td>
+            </tr>`).join('')}
+        </tbody>
+      </table>` : `<p class="text-gray-500">${t('common.noData')}</p>`}`;
+  } catch (err) {
+    container.innerHTML = `<p class="text-red-600">${escHtml(err.message)}</p>`;
+  }
+}
+
+window.showJsonLdModal = function (config = null) {
+  const types = ['Organization', 'LocalBusiness', 'WebSite', 'Store', 'Corporation'];
+  const cur = config?.page_type || 'Organization';
+  const typeOptions = (types.includes(cur) ? types : [cur, ...types])
+    .map(x => `<option value="${escHtml(x)}" ${x === cur ? 'selected' : ''}>${escHtml(x)}</option>`).join('');
+  const fields =
+    `<div><label class="block font-medium mb-1">${t('seo.schemaType')}</label>
+      <select name="page_type" class="w-full px-3 py-2 border rounded">${typeOptions}</select></div>` +
+    fieldInput(t('seo.name'), 'name', config?.name) +
+    fieldTextarea(t('common.description'), 'description', config?.description, 2) +
+    fieldInput('URL', 'url', config?.url, 'text', 'placeholder="https://"') +
+    fieldInput('Logo URL', 'logo', config?.logo) +
+    fieldTextarea('Same As（社交主页链接，每行一个）', 'same_as', config?.same_as, 3) +
+    fieldTextarea(t('seo.extraData'), 'extra_data', config?.extra_data, 4, 'style="font-family:monospace;font-size:13px" placeholder=\'{"foundingDate": "2015"}\'') +
+    fieldCheckbox(t('common.active'), 'is_active', config ? config.is_active : 1);
+  openSimpleModal('jsonld-modal', t('seo.addConfig'), fields, async (data) => {
+    if (data.extra_data && data.extra_data.trim()) {
+      try { JSON.parse(data.extra_data); } catch (e) { throw new Error('Extra Data 不是有效的 JSON'); }
+    }
+    if (config) await adminRequest(`/api/jsonld/${config.id}`, 'PUT', data);
+    else await adminRequest('/api/jsonld', 'POST', data);
+    loadJsonLdConfigs();
+  });
+};
+
+window.editJsonLd = async function (id) {
+  try {
+    const data = await adminRequest(`/api/admin/item/jsonld/${id}`);
+    showJsonLdModal(data.data);
+  } catch (err) { alert(err.message); }
+};
+
+window.deleteJsonLd = async function (id) {
+  if (!confirm(t('common.confirmDelete'))) return;
+  try { await adminRequest(`/api/jsonld/${id}`, 'DELETE'); loadJsonLdConfigs(); }
+  catch (err) { alert(err.message); }
+};
+
+// ==================== Robots.txt ====================
+async function loadRobotsConfigs() {
+  const container = document.getElementById('robots-form');
+  if (!container) return;
+  try {
+    const data = await adminRequest('/api/admin/list/robots');
+    const items = data.data || [];
+    container.innerHTML = `
+      <div class="mb-4 text-sm text-gray-600">一条规则对应 robots.txt 里的一个 User-agent 段。路径每行一个，例如 Disallow 填 <code>/admin</code>。</div>
+      <button class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 mb-4" onclick="showRobotsModal()">${t('robots.addRule')}</button>
+      ${items.length ? `
+      <table>
+        <thead><tr><th>ID</th><th>${t('robots.userAgent')}</th><th>${t('robots.allow')}</th><th>${t('robots.disallow')}</th><th>${t('common.status')}</th><th>${t('common.actions')}</th></tr></thead>
+        <tbody>
+          ${items.map(r => `
+            <tr>
+              <td>${r.id}</td>
+              <td>${escHtml(r.user_agent)}</td>
+              <td><pre class="text-xs">${escHtml(r.allow_paths || '-')}</pre></td>
+              <td><pre class="text-xs">${escHtml(r.disallow_paths || '-')}</pre></td>
+              <td>${r.is_active ? t('common.active2') : t('common.inactive2')}</td>
+              <td>
+                <button class="btn btn-sm btn-warning" onclick="editRobots(${r.id})">${t('common.edit')}</button>
+                <button class="btn btn-sm btn-danger" onclick="deleteRobots(${r.id})">${t('common.delete')}</button>
+              </td>
+            </tr>`).join('')}
+        </tbody>
+      </table>` : `<p class="text-gray-500">${t('common.noData')}</p>`}
+      <pre id="robots-preview" class="mt-4 p-4 bg-gray-900 text-green-300 rounded text-sm hidden" style="white-space:pre-wrap"></pre>`;
+  } catch (err) {
+    container.innerHTML = `<p class="text-red-600">${escHtml(err.message)}</p>`;
+  }
+}
+
+window.showRobotsModal = function (config = null) {
+  const fields =
+    fieldInput(t('robots.userAgent'), 'user_agent', config?.user_agent ?? '*', 'text', 'required') +
+    fieldTextarea(t('robots.allow') + '（每行一个路径）', 'allow_paths', config?.allow_paths ?? '/', 3) +
+    fieldTextarea(t('robots.disallow') + '（每行一个路径）', 'disallow_paths', config?.disallow_paths ?? '/admin\n/api/', 3) +
+    fieldInput('Sitemap URL（留空则自动使用 站点地址/sitemap.xml）', 'sitemap_url', config?.sitemap_url) +
+    fieldInput(t('common.sortOrder'), 'sort_order', config?.sort_order ?? 0, 'number') +
+    fieldCheckbox(t('common.active'), 'is_active', config ? config.is_active : 1);
+  openSimpleModal('robots-modal', t('robots.addRule'), fields, async (data) => {
+    data.sort_order = parseInt(data.sort_order) || 0;
+    if (config) await adminRequest(`/api/robots/${config.id}`, 'PUT', data);
+    else await adminRequest('/api/robots', 'POST', data);
+    loadRobotsConfigs();
+  });
+};
+
+window.editRobots = async function (id) {
+  try {
+    const data = await adminRequest(`/api/admin/item/robots/${id}`);
+    showRobotsModal(data.data);
+  } catch (err) { alert(err.message); }
+};
+
+window.deleteRobots = async function (id) {
+  if (!confirm(t('common.confirmDelete'))) return;
+  try { await adminRequest(`/api/robots/${id}`, 'DELETE'); loadRobotsConfigs(); }
+  catch (err) { alert(err.message); }
+};
+
+window.previewRobots = async function () {
+  try {
+    const res = await fetch('/robots.txt?_=' + Date.now(), { cache: 'no-store' });
+    const text = await res.text();
+    const box = document.getElementById('robots-preview');
+    if (box) { box.textContent = text; box.classList.remove('hidden'); }
+    else alert(text);
+  } catch (err) { alert(t('common.error')); }
 };

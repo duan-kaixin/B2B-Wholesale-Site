@@ -21,6 +21,62 @@ admin.post('/login', async (c) => {
   return c.json({ success: true, data: { username: adminUsername } });
 });
 
+
+/** 把数组/对象转成 JSON 字符串，避免 D1 绑定数组时报错 */
+function normalizeJsonFields(body: any) {
+  for (const k of ['images', 'specifications']) {
+    if (body && body[k] !== undefined && body[k] !== null && typeof body[k] !== 'string') {
+      body[k] = JSON.stringify(body[k]);
+    }
+  }
+  return body;
+}
+
+function parseJsonField(value: any, fallback: any) {
+  if (value === null || value === undefined || value === '') return fallback;
+  if (typeof value !== 'string') return value;
+  try { return JSON.parse(value); } catch { return fallback; }
+}
+
+/** 后台编辑：按数字 ID 读取单条记录（包含未启用的） */
+const EDITABLE_TABLES: Record<string, string> = {
+  products: 'products',
+  categories: 'categories',
+  solutions: 'solutions',
+  cases: 'cases',
+  news: 'news',
+  pages: 'pages',
+  slides: 'slides',
+  jsonld: 'json_ld_configs',
+  robots: 'robots_configs',
+};
+
+admin.get('/item/:type/:id', async (c) => {
+  const table = EDITABLE_TABLES[c.req.param('type')];
+  const id = parseInt(c.req.param('id') || '0');
+  if (!table || !id) {
+    return c.json({ success: false, error: 'Invalid request' }, 400);
+  }
+  const row: any = await c.env.DB.prepare(`SELECT * FROM ${table} WHERE id = ?`).bind(id).first();
+  if (!row) {
+    return c.json({ success: false, error: 'Not found' }, 404);
+  }
+  if ('images' in row) row.images = parseJsonField(row.images, []);
+  if ('specifications' in row) row.specifications = parseJsonField(row.specifications, {});
+  return c.json({ success: true, data: row });
+});
+
+/** 后台列表：返回全部记录（包含未启用的） */
+admin.get('/list/:type', async (c) => {
+  const table = EDITABLE_TABLES[c.req.param('type')];
+  if (!table) {
+    return c.json({ success: false, error: 'Invalid request' }, 400);
+  }
+  const hasSort = ['slides', 'robots_configs'].includes(table);
+  const result = await c.env.DB.prepare(`SELECT * FROM ${table} ORDER BY ${hasSort ? 'sort_order ASC, ' : ''}id ASC`).all();
+  return c.json({ success: true, data: result.results || [] });
+});
+
 /** 手动清空所有 KV 缓存（后台「清除缓存」按钮） */
 admin.post('/cache/clear', async (c) => {
   try {
@@ -35,7 +91,7 @@ admin.post('/cache/clear', async (c) => {
 
 admin.post('/products', async (c) => {
   const db = new Database(c.env.DB, c.env.CACHE);
-  const body = await c.req.json();
+  const body = normalizeJsonFields(await c.req.json());
   const slug = body.slug || body.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
   const id = await db.createProduct({ ...body, slug });
   return c.json({ success: true, data: { id }, message: 'Product created' }, 201);
@@ -44,7 +100,7 @@ admin.post('/products', async (c) => {
 admin.put('/products/:id', async (c) => {
   const db = new Database(c.env.DB, c.env.CACHE);
   const id = parseInt(c.req.param('id') || '0');
-  const body = await c.req.json();
+  const body = normalizeJsonFields(await c.req.json());
   const updated = await db.updateProduct(id, body);
   if (!updated) {
     return c.json({ success: false, error: 'Failed to update' }, 500);
@@ -93,7 +149,7 @@ admin.delete('/categories/:id', async (c) => {
 
 admin.post('/solutions', async (c) => {
   const db = new Database(c.env.DB, c.env.CACHE);
-  const body = await c.req.json();
+  const body = normalizeJsonFields(await c.req.json());
   const slug = body.slug || body.title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
   const id = await db.createSolution({ ...body, slug });
   return c.json({ success: true, data: { id }, message: 'Solution created' }, 201);
@@ -102,7 +158,7 @@ admin.post('/solutions', async (c) => {
 admin.put('/solutions/:id', async (c) => {
   const db = new Database(c.env.DB, c.env.CACHE);
   const id = parseInt(c.req.param('id') || '0');
-  const body = await c.req.json();
+  const body = normalizeJsonFields(await c.req.json());
   const updated = await db.updateSolution(id, body);
   if (!updated) {
     return c.json({ success: false, error: 'Failed to update' }, 500);
@@ -122,7 +178,7 @@ admin.delete('/solutions/:id', async (c) => {
 
 admin.post('/cases', async (c) => {
   const db = new Database(c.env.DB, c.env.CACHE);
-  const body = await c.req.json();
+  const body = normalizeJsonFields(await c.req.json());
   const slug = body.slug || body.title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
   const id = await db.createCase({ ...body, slug });
   return c.json({ success: true, data: { id }, message: 'Case created' }, 201);
@@ -131,7 +187,7 @@ admin.post('/cases', async (c) => {
 admin.put('/cases/:id', async (c) => {
   const db = new Database(c.env.DB, c.env.CACHE);
   const id = parseInt(c.req.param('id') || '0');
-  const body = await c.req.json();
+  const body = normalizeJsonFields(await c.req.json());
   const updated = await db.updateCase(id, body);
   if (!updated) {
     return c.json({ success: false, error: 'Failed to update' }, 500);
@@ -151,7 +207,7 @@ admin.delete('/cases/:id', async (c) => {
 
 admin.post('/news', async (c) => {
   const db = new Database(c.env.DB, c.env.CACHE);
-  const body = await c.req.json();
+  const body = normalizeJsonFields(await c.req.json());
   const slug = body.slug || body.title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
   const id = await db.createNews({ ...body, slug });
   return c.json({ success: true, data: { id }, message: 'News created' }, 201);
@@ -160,7 +216,7 @@ admin.post('/news', async (c) => {
 admin.put('/news/:id', async (c) => {
   const db = new Database(c.env.DB, c.env.CACHE);
   const id = parseInt(c.req.param('id') || '0');
-  const body = await c.req.json();
+  const body = normalizeJsonFields(await c.req.json());
   const updated = await db.updateNews(id, body);
   if (!updated) {
     return c.json({ success: false, error: 'Failed to update' }, 500);
