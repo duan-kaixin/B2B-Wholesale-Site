@@ -12,7 +12,7 @@ directory = "./public"
 [[d1_databases]]
 binding = "DB"
 database_name = "b2b_wholesale_db"
-database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"  # 替换为 `wrangler d1 create b2b_wholesale_db` 返回的 id
+database_id = "c054ce40-0eb5-454b-916c-6cf28a147405"  # 替换为 `wrangler d1 create b2b_wholesale_db` 返回的 id
 
 # ============================================================
 # R2：媒体文件存储（产品图等）
@@ -28,7 +28,7 @@ bucket_name = "b2b-wholesale-media"
 # ============================================================
 [[kv_namespaces]]
 binding = "CACHE"
-id = "REPLACE_WITH_YOUR_KV_NAMESPACE_ID"
+id = "62517244747743b79f61243b33bc6753"
 
 # ============================================================
 # 环境变量
