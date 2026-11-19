@@ -795,8 +795,8 @@ app.get('/admin/*', async (c) => {
         <div id="inquiries-page" class="page hidden"><div class="flex justify-between items-center mb-4"><h2 class="text-xl font-semibold" data-i18n="inquiries.title">Inquiries</h2></div><div id="inquiry-table"></div></div>
         <div id="leads-page" class="page hidden"><div class="flex justify-between items-center mb-4"><h2 class="text-xl font-semibold" data-i18n="leads.title">Leads</h2></div><div id="leads-table"></div></div>
         <div id="settings-page" class="page hidden">
-          <h2 class="text-xl font-semibold mb-4" data-i18n="settings.generalSettings">General Settings</h2><form id="settings-form"></form>
-          <h2 class="text-xl font-semibold mt-8 mb-4" data-i18n="settings.popupSettings">Popup Settings</h2><form id="popup-settings-form"></form>
+          <h2 class="text-xl font-semibold mb-4" data-i18n="settings.generalSettings">General Settings</h2><div id="settings-form"></div>
+          <h2 class="text-xl font-semibold mt-8 mb-4" data-i18n="settings.popupSettings">Popup Settings</h2><div id="popup-settings-form"></div>
           <h2 class="text-xl font-semibold mt-8 mb-4" data-i18n="settings.socialLinks">Social Links</h2><div id="social-links-form"></div>
           <h2 class="text-xl font-semibold mt-8 mb-4" data-i18n="settings.contactInfo">Contact Info</h2><div id="contact-info-form"></div>
           <h2 class="text-xl font-semibold mt-8 mb-4" data-i18n="settings.translationSettings">Translation Settings</h2><div id="translation-settings-form"></div>
