@@ -626,7 +626,7 @@ function renderLeadsTable(leads) {
 }
 
 async function loadSettings() {
-  const page = document.querySelector(`[data-page="settings"]`);
+  const page = document.getElementById('settings-page');
   if (!page) return;
   
   loadGeneralSettings();
