@@ -202,16 +202,16 @@ async function loadProducts() {
     
     if (data.success && data.data.items && data.data.items.length > 0) {
       container.html(data.data.items.map(product => `
-        <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition">
+        <a href="/product/${product.slug}" class="block bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl hover:-translate-y-1 transition cursor-pointer">
           <img src="${product.images?.[0] || '/images/placeholder.png'}" alt="${product.name}" class="w-full h-48 object-cover" onerror="this.src='/images/placeholder.png'">
           <div class="p-6">
             <h3 class="text-lg font-semibold mb-2">${product.name}</h3>
             ${product.short_description ? `<p class="text-gray-600 text-sm mb-3 line-clamp-2">${product.short_description}</p>` : ''}
             ${product.price ? `<p class="text-blue-600 font-bold text-xl mb-2">$${product.price}</p>` : ''}
             <p class="text-gray-500 text-sm mb-4">MOQ: ${product.min_order_qty} pcs</p>
-            <a href="/products" class="inline-block border-2 border-blue-600 text-blue-600 px-4 py-2 rounded-lg hover:bg-blue-600 hover:text-white transition">View Details</a>
+            <span class="inline-block border-2 border-blue-600 text-blue-600 px-4 py-2 rounded-lg hover:bg-blue-600 hover:text-white transition">View Details</span>
           </div>
-        </div>
+        </a>
       `).join(''));
     } else {
       container.html('<p class="text-center text-gray-500 col-span-3">No products available.</p>');

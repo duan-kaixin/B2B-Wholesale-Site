@@ -848,7 +848,7 @@ app.get('/products', async (c) => {
         </div>
         <div id="product-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           ${productsData.items.length > 0 ? productsData.items.map((p: any) => `
-            <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition">
+            <a href="/product/${p.slug}" class="block bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl hover:-translate-y-1 transition cursor-pointer">
               <div class="h-48 bg-gray-200 flex items-center justify-center">
                 ${firstImage(p.images) ? `<img src="${firstImage(p.images)}" alt="${p.name}" class="w-full h-full object-cover">` : '<iconify-icon icon="mdi:package-variant" width="64" class="text-gray-400"></iconify-icon>'}
               </div>
@@ -857,10 +857,10 @@ app.get('/products', async (c) => {
                 <p class="text-gray-600 text-sm mb-3">${p.short_description || ''}</p>
                 <div class="flex justify-between items-center">
                   ${p.price ? `<span class="text-blue-600 font-bold">$${p.price}</span>` : ''}
-                  <a href="/product/${p.slug}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">View Details</a>
+                  <span class="text-blue-600 hover:text-blue-800 text-sm font-medium">View Details</span>
                 </div>
               </div>
-            </div>
+            </a>
           `).join('') : '<p class="text-gray-500 col-span-full text-center py-8">No products found</p>'}
         </div>
         ${productsData.total > 12 ? `<div class="mt-8 text-center"><button class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Load More</button></div>` : ''}
