@@ -203,7 +203,9 @@ async function loadProducts() {
     if (data.success && data.data.items && data.data.items.length > 0) {
       container.html(data.data.items.map(product => `
         <a href="/product/${product.slug}" class="block bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl hover:-translate-y-1 transition cursor-pointer">
-          <img src="${product.images?.[0] || '/images/placeholder.png'}" alt="${product.name}" class="w-full h-48 object-cover" onerror="this.src='/images/placeholder.png'">
+          <div class="aspect-square bg-white flex items-center justify-center p-4 border-b border-gray-100">
+            <img src="${product.images?.[0] || '/images/placeholder.png'}" alt="${product.name}" class="max-w-full max-h-full object-contain" loading="lazy" onerror="this.src='/images/placeholder.png'">
+          </div>
           <div class="p-6">
             <h3 class="text-lg font-semibold mb-2">${product.name}</h3>
             ${product.short_description ? `<p class="text-gray-600 text-sm mb-3 line-clamp-2">${product.short_description}</p>` : ''}

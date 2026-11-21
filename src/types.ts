@@ -26,6 +26,7 @@ export interface Category {
   parent_id: number | null;
   sort_order: number;
   is_active: number;
+  image_url?: string | null;
   created_at: string;
   updated_at: string;
 }

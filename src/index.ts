@@ -327,6 +327,7 @@ app.get('/', async (c) => {
   const socialLinks = await db.getSocialLinks();
   const contactInfo = await db.getContactInfo();
   const slidesData = await db.getSlides();
+  const homeCategories = await db.getCategories();
   const newsData = await db.getNews(false, 1, 6);
 
   const jsonLdConfigs = await db.getJsonLdConfigs();
@@ -470,6 +471,26 @@ app.get('/', async (c) => {
       </div>
     </section>
     `}
+
+    ${homeCategories.length ? `
+    <section id="categories" class="py-16 bg-gray-50">
+      <div class="container mx-auto px-4">
+        <h2 class="text-3xl font-bold text-center mb-12">Product Categories</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          ${homeCategories.map((cat: any) => `
+            <a href="/products?category=${cat.id}" class="group relative block h-56 rounded-lg overflow-hidden shadow-md bg-gradient-to-br from-slate-700 to-slate-900">
+              ${cat.image_url ? `<img src="${cat.image_url}" alt="${cat.name}" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition duration-500" loading="lazy">` : `<iconify-icon icon="mdi:solar-power-variant" width="96" class="absolute right-4 top-4 text-white opacity-20"></iconify-icon>`}
+              <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
+              <div class="absolute bottom-0 left-0 right-0 p-5 text-white">
+                <h3 class="text-xl font-bold">${cat.name}</h3>
+                <span class="text-sm text-gray-200 group-hover:text-white">View products &rarr;</span>
+              </div>
+            </a>
+          `).join('')}
+        </div>
+      </div>
+    </section>
+    ` : ''}
 
     <section id="products" class="py-16">
       <div class="container mx-auto px-4">
@@ -828,7 +849,9 @@ app.get('/products', async (c) => {
   const settingsData = await db.getSettings();
   const socialLinks = await db.getSocialLinks();
   const contactInfo = await db.getContactInfo();
-  const productsData = await db.getProducts(undefined, 1, 12);
+  const catParam = parseInt(c.req.query('category') || '', 10);
+  const activeCat = Number.isFinite(catParam) ? catParam : undefined;
+  const productsData = await db.getProducts(activeCat, 1, 12);
   const categories = await db.getCategories();
 
   const content = `
@@ -841,16 +864,16 @@ app.get('/products', async (c) => {
     <section class="py-16">
       <div class="container mx-auto px-4">
         <div class="mb-8">
-          <select id="category-filter" class="px-4 py-2 border border-gray-300 rounded-lg" onchange="filterProducts(this.value)">
+          <select id="category-filter" class="px-4 py-2 border border-gray-300 rounded-lg" onchange="location.href = this.value ? '/products?category=' + this.value : '/products'">
             <option value="">All Categories</option>
-            ${categories.map((c: any) => `<option value="${c.id}">${c.name}</option>`).join('')}
+            ${categories.map((c: any) => `<option value="${c.id}" ${c.id === activeCat ? 'selected' : ''}>${c.name}</option>`).join('')}
           </select>
         </div>
         <div id="product-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           ${productsData.items.length > 0 ? productsData.items.map((p: any) => `
             <a href="/product/${p.slug}" class="block bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl hover:-translate-y-1 transition cursor-pointer">
-              <div class="h-48 bg-gray-200 flex items-center justify-center">
-                ${firstImage(p.images) ? `<img src="${firstImage(p.images)}" alt="${p.name}" class="w-full h-full object-cover">` : '<iconify-icon icon="mdi:package-variant" width="64" class="text-gray-400"></iconify-icon>'}
+              <div class="aspect-square bg-white flex items-center justify-center p-4 border-b border-gray-100">
+                ${firstImage(p.images) ? `<img src="${firstImage(p.images)}" alt="${p.name}" class="max-w-full max-h-full object-contain" loading="lazy">` : '<iconify-icon icon="mdi:package-variant" width="64" class="text-gray-400"></iconify-icon>'}
               </div>
               <div class="p-4">
                 <h3 class="text-lg font-semibold mb-2">${p.name}</h3>
@@ -1204,8 +1227,8 @@ app.get('/product/:slug', async (c) => {
   const siteUrl = c.env.SITE_URL || `https://${c.req.header('host') || 'example.com'}`;
 
   const gallery = images.length
-    ? `<img id="main-image" src="${images[0]}" alt="${product.name}" class="w-full h-96 object-cover rounded-lg mb-4">
-       ${images.length > 1 ? `<div class="grid grid-cols-4 gap-2">${images.map((img, i) => `<img src="${img}" data-index="${i}" class="gallery-thumb w-full h-20 object-cover rounded cursor-pointer border-2 ${i === 0 ? 'border-blue-600' : 'border-transparent'}" alt="${product.name}">`).join('')}</div>` : ''}`
+    ? `<div class="aspect-square bg-white border border-gray-200 rounded-lg mb-4 flex items-center justify-center p-6"><img id="main-image" src="${images[0]}" alt="${product.name}" class="max-w-full max-h-full object-contain"></div>
+       ${images.length > 1 ? `<div class="grid grid-cols-5 gap-2">${images.map((img, i) => `<img src="${img}" data-index="${i}" class="gallery-thumb w-full aspect-square object-contain bg-white p-1 rounded cursor-pointer border-2 ${i === 0 ? 'border-blue-600' : 'border-gray-200'}" alt="${product.name}" loading="lazy">`).join('')}</div>` : ''}`
     : '<div class="w-full h-96 bg-gray-200 flex items-center justify-center rounded-lg mb-4"><iconify-icon icon="mdi:package-variant" width="96" class="text-gray-400"></iconify-icon></div>';
 
   const specRows = Object.keys(specs).length
@@ -1249,8 +1272,8 @@ app.get('/product/:slug', async (c) => {
           el.addEventListener('click', function(){
             var i = parseInt(this.getAttribute('data-index'), 10);
             if (main && images[i]) main.src = images[i];
-            document.querySelectorAll('.gallery-thumb').forEach(function(t){ t.classList.remove('border-blue-600'); t.classList.add('border-transparent'); });
-            this.classList.remove('border-transparent'); this.classList.add('border-blue-600');
+            document.querySelectorAll('.gallery-thumb').forEach(function(t){ t.classList.remove('border-blue-600'); t.classList.add('border-gray-200'); });
+            this.classList.remove('border-gray-200'); this.classList.add('border-blue-600');
           });
         });
       })();
