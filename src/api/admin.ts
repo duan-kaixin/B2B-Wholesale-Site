@@ -24,7 +24,7 @@ admin.post('/login', async (c) => {
 
 /** 把数组/对象转成 JSON 字符串，避免 D1 绑定数组时报错 */
 function normalizeJsonFields(body: any) {
-  for (const k of ['images', 'specifications']) {
+  for (const k of ['images', 'specifications', 'variants']) {
     if (body && body[k] !== undefined && body[k] !== null && typeof body[k] !== 'string') {
       body[k] = JSON.stringify(body[k]);
     }
@@ -63,6 +63,7 @@ admin.get('/item/:type/:id', async (c) => {
   }
   if ('images' in row) row.images = parseJsonField(row.images, []);
   if ('specifications' in row) row.specifications = parseJsonField(row.specifications, {});
+  if ('variants' in row) row.variants = parseJsonField(row.variants, null);
   return c.json({ success: true, data: row });
 });
 

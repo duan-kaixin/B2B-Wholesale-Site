@@ -42,6 +42,8 @@ export interface Product {
   min_order_qty: number;
   images: string | null;
   specifications: string | null;
+  /** JSON: { attrs: [{name, values[]}], skus: [{values[], code, price, moq, image, enabled}] } */
+  variants?: string | null;
   is_active: number;
   is_featured: number;
   view_count: number;

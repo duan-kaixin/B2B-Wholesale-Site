@@ -218,8 +218,8 @@ class Database {
 
   async createProduct(product: Partial<Product>): Promise<number> {
     const result = await this.db.prepare(`
-      INSERT INTO products (category_id, name, slug, description, short_description, price, min_order_qty, images, specifications, is_active, is_featured)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO products (category_id, name, slug, description, short_description, price, min_order_qty, images, specifications, variants, is_active, is_featured)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).bind(
       product.category_id || null,
       product.name,
@@ -230,6 +230,7 @@ class Database {
       product.min_order_qty || 1,
       serializeJson(product.images),
       serializeJson(product.specifications),
+      serializeJson(product.variants),
       product.is_active !== undefined ? (product.is_active ? 1 : 0) : 1,
       product.is_featured !== undefined ? (product.is_featured ? 1 : 0) : 0
     ).run();
@@ -250,6 +251,7 @@ class Database {
     if (product.min_order_qty !== undefined) { updates.push('min_order_qty = ?'); params.push(product.min_order_qty); }
     if (product.images !== undefined) { updates.push('images = ?'); params.push(serializeJson(product.images)); }
     if (product.specifications !== undefined) { updates.push('specifications = ?'); params.push(serializeJson(product.specifications)); }
+    if (product.variants !== undefined) { updates.push('variants = ?'); params.push(serializeJson(product.variants)); }
     if (product.is_active !== undefined) { updates.push('is_active = ?'); params.push(product.is_active ? 1 : 0); }
     if (product.is_featured !== undefined) { updates.push('is_featured = ?'); params.push(product.is_featured ? 1 : 0); }
     if (updates.length === 0) return false;

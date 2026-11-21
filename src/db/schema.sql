@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS products (
   min_order_qty INTEGER DEFAULT 1,
   images TEXT,
   specifications TEXT,
+  variants TEXT,
   is_active INTEGER DEFAULT 1,
   is_featured INTEGER DEFAULT 0,
   view_count INTEGER DEFAULT 0,

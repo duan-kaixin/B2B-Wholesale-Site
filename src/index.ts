@@ -840,6 +840,7 @@ app.get('/admin/*', async (c) => {
   </div>
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
   <script src="/js/admin.js"></script>
+  <script src="/js/product-editor.js"></script>
 </body>
 </html>`);
 });
@@ -1167,6 +1168,10 @@ function safeParseObject(value: any): Record<string, any> {
 }
 
 /** 取图片数组第一张的 URL，解析失败返回空字符串（用于列表页缩略图） */
+function escapeHtml(value: any): string {
+  return String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
 function firstImage(value: any): string {
   const arr = safeParseArray(value);
   return arr.length ? String(arr[0]) : '';
@@ -1224,6 +1229,22 @@ app.get('/product/:slug', async (c) => {
   const category = product.category_id ? await db.getCategoryById(product.category_id) : null;
   const images = safeParseArray(product.images);
   const specs = safeParseObject(product.specifications);
+  const variants = safeParseObject((product as any).variants) as any;
+  const vAttrs: any[] = Array.isArray(variants?.attrs) ? variants.attrs.filter((a: any) => a && a.name && Array.isArray(a.values) && a.values.length) : [];
+  const vSkus: any[] = Array.isArray(variants?.skus) ? variants.skus.filter((s: any) => s && Array.isArray(s.values) && s.enabled !== false) : [];
+  const hasVariants = vAttrs.length > 0 && vSkus.length > 0;
+  const variantHtml = hasVariants ? `
+    <div id="variant-picker" class="mb-6 space-y-4">
+      ${vAttrs.map((a: any, ai: number) => `
+        <div>
+          <p class="text-sm font-medium text-gray-700 mb-2">${escapeHtml(a.name)}: <span class="variant-chosen text-gray-900" data-ai="${ai}"></span></p>
+          <div class="flex flex-wrap gap-2">
+            ${a.values.map((v: string) => `<button type="button" class="variant-opt px-4 py-2 border-2 border-gray-200 rounded-lg text-sm hover:border-blue-400 transition" data-ai="${ai}" data-v="${escapeHtml(v)}">${escapeHtml(v)}</button>`).join('')}
+          </div>
+        </div>`).join('')}
+      <p id="variant-note" class="text-sm text-red-600 hidden">This combination is currently unavailable.</p>
+      <p id="variant-code" class="text-xs text-gray-400"></p>
+    </div>` : '';
   const siteUrl = c.env.SITE_URL || `https://${c.req.header('host') || 'example.com'}`;
 
   const gallery = images.length
@@ -1249,8 +1270,9 @@ app.get('/product/:slug', async (c) => {
             ${category ? `<span class="inline-block bg-blue-100 text-blue-700 text-xs px-3 py-1 rounded-full mb-3">${category.name}</span>` : ''}
             <h2 class="text-2xl font-bold mb-4">${product.name}</h2>
             <p class="text-gray-600 mb-6">${product.short_description || ''}</p>
-            ${product.price ? `<p class="text-3xl font-bold text-blue-600 mb-2">$${product.price}</p>` : ''}
-            ${product.min_order_qty ? `<p class="text-gray-500 mb-6">Min. Order: ${product.min_order_qty} units</p>` : ''}
+            ${product.price ? `<p class="text-3xl font-bold text-blue-600 mb-2"><span id="product-price-prefix">${hasVariants ? 'From ' : ''}</span>$<span id="product-price">${product.price}</span></p>` : '<p class="text-3xl font-bold text-blue-600 mb-2 hidden" id="product-price-wrap">$<span id="product-price"></span></p>'}
+            ${product.min_order_qty ? `<p class="text-gray-500 mb-6">Min. Order: <span id="product-moq">${product.min_order_qty}</span> units</p>` : ''}
+            ${variantHtml}
             <button onclick="openInquiry(${product.id})" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-semibold py-3 rounded-lg transition mb-6">Request a Quote</button>
             <div class="border-t pt-6">
               <h3 class="font-semibold mb-3">Specifications</h3>
@@ -1277,9 +1299,56 @@ app.get('/product/:slug', async (c) => {
           });
         });
       })();
+      (function(){
+        var attrs = ${JSON.stringify(hasVariants ? vAttrs : []).replace(/</g, '\\u003c')};
+        var skus = ${JSON.stringify(hasVariants ? vSkus : []).replace(/</g, '\\u003c')};
+        if (!attrs.length) return;
+        var base = { price: ${JSON.stringify(product.price ?? null)}, moq: ${JSON.stringify(product.min_order_qty ?? null)}, image: ${JSON.stringify(images[0] || '').replace(/</g, '\\u003c')} };
+        var chosen = attrs.map(function(){ return null; });
+        var main = document.getElementById('main-image');
+        function setText(id, v){ var el = document.getElementById(id); if (el) el.textContent = v; }
+        function update(){
+          document.querySelectorAll('.variant-opt').forEach(function(b){
+            var on = chosen[+b.dataset.ai] === b.dataset.v;
+            b.classList.toggle('border-blue-600', on); b.classList.toggle('bg-blue-50', on); b.classList.toggle('text-blue-700', on);
+            b.classList.toggle('border-gray-200', !on);
+          });
+          document.querySelectorAll('.variant-chosen').forEach(function(s){ s.textContent = chosen[+s.dataset.ai] || ''; });
+          var complete = chosen.every(function(v){ return v !== null; });
+          var sku = complete ? skus.find(function(s){ return s.values.join('||') === chosen.join('||'); }) : null;
+          var note = document.getElementById('variant-note');
+          if (note) note.classList.toggle('hidden', !complete || !!sku);
+          setText('product-price-prefix', sku ? '' : 'From ');
+          if (sku) {
+            var p = sku.price != null ? sku.price : base.price;
+            if (p != null) { setText('product-price', p); var w = document.getElementById('product-price-wrap'); if (w) w.classList.remove('hidden'); }
+            setText('product-moq', sku.moq != null ? sku.moq : base.moq);
+            setText('variant-code', sku.code ? 'SKU: ' + sku.code : '');
+            if (main && sku.image) main.src = sku.image;
+          } else {
+            if (base.price != null) setText('product-price', base.price);
+            setText('product-moq', base.moq);
+            setText('variant-code', '');
+          }
+        }
+        document.querySelectorAll('.variant-opt').forEach(function(b){
+          b.addEventListener('click', function(){
+            var ai = +this.dataset.ai;
+            chosen[ai] = chosen[ai] === this.dataset.v ? null : this.dataset.v;
+            update();
+          });
+        });
+        window.__selectedVariant = function(){
+          return chosen.every(function(v){ return v !== null; }) ? attrs.map(function(a, i){ return a.name + ': ' + chosen[i]; }).join(', ') : '';
+        };
+        update();
+      })();
       function openInquiry(productId) {
         var idInput = document.getElementById('inquiry-product-id');
         if (idInput) idInput.value = productId;
+        var v = window.__selectedVariant ? window.__selectedVariant() : '';
+        var msg = document.getElementById('popup-message');
+        if (msg && v && !msg.value) msg.value = 'I am interested in: ' + v + '\\n';
         showPopup();
       }
     </script>
