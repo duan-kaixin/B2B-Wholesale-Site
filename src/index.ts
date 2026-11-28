@@ -505,7 +505,7 @@ app.get('/', async (c) => {
       </div>
     </section>
 
-    <section id="solutions" class="py-16 bg-gray-50">
+    <section id="solutions" class="py-16 bg-gray-50" style="display:none">
       <div class="container mx-auto px-4">
         <h2 class="text-3xl font-bold text-center mb-12">Application Solutions</h2>
         <div id="solution-list" class="grid grid-cols-1 md:grid-cols-3 gap-8"></div>
@@ -515,7 +515,7 @@ app.get('/', async (c) => {
       </div>
     </section>
 
-    <section id="cases" class="py-16">
+    <section id="cases" class="py-16" style="display:none">
       <div class="container mx-auto px-4">
         <h2 class="text-3xl font-bold text-center mb-12">Customer Cases</h2>
         <div id="case-list" class="grid grid-cols-1 md:grid-cols-3 gap-8"></div>
@@ -525,7 +525,7 @@ app.get('/', async (c) => {
       </div>
     </section>
 
-    <section id="blogs" class="py-16 bg-gray-50">
+    ${newsData.items.length > 0 ? `<section id="blogs" class="py-16 bg-gray-50">
       <div class="container mx-auto px-4">
         <h2 class="text-3xl font-bold text-center mb-12">Latest News</h2>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -547,7 +547,7 @@ app.get('/', async (c) => {
           <a href="/news" class="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition">View All News</a>
         </div>
       </div>
-    </section>
+    </section>` : ''}
 
     <section id="contact" class="py-16 bg-gray-50">
       <div class="container mx-auto px-4">

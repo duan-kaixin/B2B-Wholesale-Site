@@ -243,6 +243,7 @@ async function loadSolutions() {
           </div>
         </div>
       `).join(''));
+      $('#solutions').show(); // 有内容才显示该版块
     }
   } catch (err) {
     console.error('Failed to load solutions:', err);
@@ -268,6 +269,7 @@ async function loadCases() {
           </div>
         </div>
       `).join(''));
+      $('#cases').show(); // 有内容才显示该版块
     }
   } catch (err) {
     console.error('Failed to load cases:', err);
