@@ -209,7 +209,7 @@ async function loadProducts() {
           <div class="p-6">
             <h3 class="text-lg font-semibold mb-2">${product.name}</h3>
             ${product.short_description ? `<p class="text-gray-600 text-sm mb-3 line-clamp-2">${product.short_description}</p>` : ''}
-            ${product.price ? `<p class="text-blue-600 font-bold text-xl mb-2">$${product.price}</p>` : ''}
+            ${product.price ? `<p class="text-blue-600 font-bold text-xl mb-2">$${Number(product.price).toFixed(2)}</p>` : ''}
             <p class="text-gray-500 text-sm mb-4">MOQ: ${product.min_order_qty} pcs</p>
             <span class="inline-block border-2 border-blue-600 text-blue-600 px-4 py-2 rounded-lg hover:bg-blue-600 hover:text-white transition">View Details</span>
           </div>

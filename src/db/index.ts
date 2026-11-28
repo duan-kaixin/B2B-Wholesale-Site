@@ -1335,10 +1335,10 @@ export function createDatabase(db: D1Database, cache?: KVNamespace): Database {
 
 export { Database };
 
-export async function generateRobotsTxt(db: D1Database): Promise<string> {
+export async function generateRobotsTxt(db: D1Database, origin?: string): Promise<string> {
   const configs = await db.prepare('SELECT * FROM robots_configs WHERE is_active = 1 ORDER BY sort_order ASC').all();
   const settings = await db.prepare('SELECT value FROM settings WHERE key = ?').bind('site_url').first() as any;
-  const siteUrl = settings?.value || '';
+  const siteUrl = origin || settings?.value || '';
 
   let robots = '# Robots.txt\n';
   for (const config of (configs.results as any) || []) {

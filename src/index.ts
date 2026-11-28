@@ -66,6 +66,39 @@ app.use('/api/*', cors());
 // （图片读取 /api/upload/image/* 必须公开，否则前台无法展示图片）
 app.use('/api/admin/*', authMiddleware);
 
+// Public base URL: SITE_URL if it is really configured, otherwise the host the visitor used
+const siteBase = (c: any): string => {
+  const v = String(c.env.SITE_URL || '');
+  return (v && !/example\.com/i.test(v) ? v : new URL(c.req.url).origin).replace(/\/$/, '');
+};
+
+
+// Per-request HTML fix-ups: canonical URL from the real host, hide nav links of empty sections
+app.use('*', async (c, next) => {
+  await next();
+  const u = new URL(c.req.url);
+  const ct = c.res.headers.get('content-type') || '';
+  if (c.req.method !== 'GET' || !ct.includes('text/html') || u.pathname.startsWith('/admin') || u.pathname.startsWith('/api')) return;
+  let html = await c.res.text();
+  const base = siteBase(c);
+  const cat = u.pathname === '/products' ? u.searchParams.get('category') : null;
+  const canon = base + (u.pathname === '/' ? '/' : u.pathname.replace(/\/$/, '')) + (cat && /^\d+$/.test(cat) ? `?category=${cat}` : '');
+  html = html.replace(/<link rel="canonical" href="[^"]*">/, `<link rel="canonical" href="${canon}">`);
+  try {
+    const n: any = await c.env.DB.prepare(
+      'SELECT (SELECT COUNT(*) FROM solutions WHERE is_active = 1) AS s, (SELECT COUNT(*) FROM cases WHERE is_active = 1) AS c, (SELECT COUNT(*) FROM news WHERE is_active = 1) AS n'
+    ).first();
+    const hide = (path: string) => { html = html.replace(new RegExp(`\\s*<li><a href="${path}" class="[^"]*">[^<]*</a></li>`, 'g'), ''); };
+    if (n && !n.s) hide('/solutions');
+    if (n && !n.c) hide('/cases');
+    if (n && !n.n) hide('/news');
+  } catch (e) { /* keep links if the count query fails */ }
+  const headers = new Headers(c.res.headers);
+  headers.delete('content-length');
+  c.res = new Response(html, { status: c.res.status, headers });
+});
+
+
 function getIconifyIcon(platform: string): string {
   const icons: { [key: string]: string } = {
     'facebook': 'fa6-brands:facebook',
@@ -199,12 +232,12 @@ function getPageLayout(
           <h4 class="text-lg font-semibold mb-4">Contact</h4>
           ${contactInfo.map((i: any) => `<p class="text-gray-400 flex items-center gap-2 mb-2"><iconify-icon icon="${getContactIcon(i.type)}"></iconify-icon> ${i.value}</p>`).join('')}
         </div>
-        <div>
+        ${socialLinks.length ? `<div>
           <h4 class="text-lg font-semibold mb-4">Follow Us</h4>
           <div class="flex gap-4">
             ${socialLinks.map((s: any) => `<a href="${s.url}" target="_blank" class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-blue-600 transition"><iconify-icon icon="${getIconifyIcon(s.platform)}" width="20"></iconify-icon></a>`).join('')}
           </div>
-        </div>
+        </div>` : ''}
         <div>
           <h4 class="text-lg font-semibold mb-4">Newsletter</h4>
           <p class="text-gray-400 text-sm mb-4">Subscribe to get updates and offers</p>
@@ -596,12 +629,12 @@ app.get('/', async (c) => {
           <h4 class="text-lg font-semibold mb-4">Contact</h4>
           ${contactInfo.map(i => `<p class="text-gray-400 flex items-center gap-2 mb-2"><iconify-icon icon="${getContactIcon(i.type)}"></iconify-icon> ${i.value}</p>`).join('')}
         </div>
-        <div>
+        ${socialLinks.length ? `<div>
           <h4 class="text-lg font-semibold mb-4">Follow Us</h4>
           <div class="flex gap-4">
             ${socialLinks.map(s => `<a href="${s.url}" target="_blank" class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-blue-600 transition"><iconify-icon icon="${getIconifyIcon(s.platform)}" width="20"></iconify-icon></a>`).join('')}
           </div>
-        </div>
+        </div>` : ''}
       </div>
       <div class="border-t border-gray-800 pt-8 text-center text-gray-400">
         <p>© ${new Date().getFullYear()} ${siteName}. All rights reserved.</p>
@@ -663,37 +696,35 @@ app.get('/sitemap.xml', async (c) => {
   const solutions = await db.getSolutions();
   const cases = await db.getCases();
   const news = await db.getNews(undefined, 1, 1000);
-  const pages = await db.getPages();
-  
-  const baseUrl = 'https://b2bwholesale.com';
-  
+  const baseUrl = siteBase(c);
+  const iso = (d: any) => String(d || '').replace(' ', 'T').slice(0, 10);
+  const today = new Date().toISOString().slice(0, 10);
+
   let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
   xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
-  xml += '  <url>\n    <loc>https://b2bwholesale.com/</loc>\n    <lastmod>2026-01-01</lastmod>\n    <changefreq>daily</changefreq>\n    <priority>1.0</priority>\n  </url>\n';
-  xml += '  <url>\n    <loc>https://b2bwholesale.com/products</loc>\n    <priority>0.9</priority>\n  </url>\n';
-  xml += '  <url>\n    <loc>https://b2bwholesale.com/solutions</loc>\n    <priority>0.8</priority>\n  </url>\n';
-  xml += '  <url>\n    <loc>https://b2bwholesale.com/cases</loc>\n    <priority>0.8</priority>\n  </url>\n';
-  xml += '  <url>\n    <loc>https://b2bwholesale.com/news</loc>\n    <priority>0.8</priority>\n  </url>\n';
-  xml += '  <url>\n    <loc>https://b2bwholesale.com/about</loc>\n    <priority>0.8</priority>\n  </url>\n';
-  xml += '  <url>\n    <loc>https://b2bwholesale.com/contact</loc>\n    <priority>0.8</priority>\n  </url>\n';
-  
+  xml += `  <url>\n    <loc>${baseUrl}/</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>daily</changefreq>\n    <priority>1.0</priority>\n  </url>\n`;
+  xml += `  <url>\n    <loc>${baseUrl}/products</loc>\n    <priority>0.9</priority>\n  </url>\n`;
+  xml += `  <url>\n    <loc>${baseUrl}/price-list</loc>\n    <priority>0.8</priority>\n  </url>\n`;
+  if (solutions.length) xml += `  <url>\n    <loc>${baseUrl}/solutions</loc>\n    <priority>0.8</priority>\n  </url>\n`;
+  if (cases.length) xml += `  <url>\n    <loc>${baseUrl}/cases</loc>\n    <priority>0.8</priority>\n  </url>\n`;
+  if (news.items.length) xml += `  <url>\n    <loc>${baseUrl}/news</loc>\n    <priority>0.8</priority>\n  </url>\n`;
+  xml += `  <url>\n    <loc>${baseUrl}/about</loc>\n    <priority>0.8</priority>\n  </url>\n`;
+  xml += `  <url>\n    <loc>${baseUrl}/contact</loc>\n    <priority>0.8</priority>\n  </url>\n`;
+
   for (const category of categories) {
-    xml += `  <url>\n    <loc>${baseUrl}/category/${category.slug}</loc>\n    <lastmod>${category.updated_at}</lastmod>\n    <priority>0.7</priority>\n  </url>\n`;
+    xml += `  <url>\n    <loc>${baseUrl}/products?category=${category.id}</loc>\n    <priority>0.7</priority>\n  </url>\n`;
   }
   for (const product of products.items) {
-    xml += `  <url>\n    <loc>${baseUrl}/product/${product.slug}</loc>\n    <lastmod>${product.updated_at}</lastmod>\n    <priority>0.6</priority>\n  </url>\n`;
+    xml += `  <url>\n    <loc>${baseUrl}/product/${product.slug}</loc>\n    <lastmod>${iso(product.updated_at)}</lastmod>\n    <priority>0.6</priority>\n  </url>\n`;
   }
   for (const solution of solutions) {
-    xml += `  <url>\n    <loc>${baseUrl}/solution/${solution.slug}</loc>\n    <lastmod>${solution.updated_at}</lastmod>\n    <priority>0.6</priority>\n  </url>\n`;
+    xml += `  <url>\n    <loc>${baseUrl}/solution/${solution.slug}</loc>\n    <lastmod>${iso(solution.updated_at)}</lastmod>\n    <priority>0.6</priority>\n  </url>\n`;
   }
   for (const item of cases) {
-    xml += `  <url>\n    <loc>${baseUrl}/case/${item.slug}</loc>\n    <lastmod>${item.updated_at}</lastmod>\n    <priority>0.6</priority>\n  </url>\n`;
+    xml += `  <url>\n    <loc>${baseUrl}/case/${item.slug}</loc>\n    <lastmod>${iso(item.updated_at)}</lastmod>\n    <priority>0.6</priority>\n  </url>\n`;
   }
   for (const item of news.items) {
-    xml += `  <url>\n    <loc>${baseUrl}/news/${item.slug}</loc>\n    <lastmod>${item.updated_at}</lastmod>\n    <priority>0.6</priority>\n  </url>\n`;
-  }
-  for (const page of pages) {
-    xml += `  <url>\n    <loc>${baseUrl}/${page.slug}</loc>\n    <lastmod>${page.updated_at}</lastmod>\n    <priority>0.5</priority>\n  </url>\n`;
+    xml += `  <url>\n    <loc>${baseUrl}/news/${item.slug}</loc>\n    <lastmod>${iso(item.updated_at)}</lastmod>\n    <priority>0.6</priority>\n  </url>\n`;
   }
   xml += '</urlset>';
   
@@ -703,7 +734,7 @@ app.get('/sitemap.xml', async (c) => {
 });
 
 app.get('/robots.txt', async (c) => {
-  const content = await generateRobotsTxt(c.env.DB);
+  const content = await generateRobotsTxt(c.env.DB, siteBase(c));
   return new Response(content, {
     headers: { 'Content-Type': 'text/plain', 'Cache-Control': 'public, max-age=3600' },
   });
@@ -897,7 +928,7 @@ app.get('/products', async (c) => {
                 <h3 class="text-lg font-semibold mb-2">${p.name}</h3>
                 <p class="text-gray-600 text-sm mb-3">${p.short_description || ''}</p>
                 <div class="flex justify-between items-center">
-                  ${p.price ? `<span class="text-blue-600 font-bold">$${p.price}</span>` : ''}
+                  ${p.price ? `<span class="text-blue-600 font-bold">$${Number(p.price).toFixed(2)}</span>` : ''}
                   <span class="text-blue-600 hover:text-blue-800 text-sm font-medium">View Details</span>
                 </div>
               </div>
@@ -1169,12 +1200,12 @@ app.get('/contact', async (c) => {
                 </div>
               `).join('')}
             </div>
-            <div class="mt-8">
+            ${socialLinks.length ? `<div class="mt-8">
               <h3 class="text-lg font-semibold mb-4">Follow Us</h3>
               <div class="flex gap-4">
                 ${socialLinks.map((s: any) => `<a href="${s.url}" target="_blank" class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center hover:bg-blue-600 hover:text-white transition"><iconify-icon icon="${getIconifyIcon(s.platform)}" width="20"></iconify-icon></a>`).join('')}
               </div>
-            </div>
+            </div>` : ''}
           </div>
           <div>
             <h2 class="text-2xl font-bold mb-6">Send Us a Message</h2>
@@ -1334,7 +1365,7 @@ app.get('/product/:slug', async (c) => {
       <p id="variant-note" class="text-sm text-red-600 hidden">This combination is currently unavailable.</p>
       <p id="variant-code" class="text-xs text-gray-400"></p>
     </div>` : '';
-  const siteUrl = c.env.SITE_URL || `https://${c.req.header('host') || 'example.com'}`;
+  const siteUrl = siteBase(c);
 
   const gallery = images.length
     ? `<div class="aspect-square bg-white border border-gray-200 rounded-lg mb-4 flex items-center justify-center p-6"><img id="main-image" src="${images[0]}" alt="${product.name}" class="max-w-full max-h-full object-contain"></div>
@@ -1359,7 +1390,7 @@ app.get('/product/:slug', async (c) => {
             ${category ? `<span class="inline-block bg-blue-100 text-blue-700 text-xs px-3 py-1 rounded-full mb-3">${category.name}</span>` : ''}
             <h2 class="text-2xl font-bold mb-4">${product.name}</h2>
             <p class="text-gray-600 mb-6">${product.short_description || ''}</p>
-            ${product.price ? `<p class="text-3xl font-bold text-blue-600 mb-2"><span id="product-price-prefix">${hasVariants ? 'From ' : ''}</span>$<span id="product-price">${product.price}</span></p>` : '<p class="text-3xl font-bold text-blue-600 mb-2 hidden" id="product-price-wrap">$<span id="product-price"></span></p>'}
+            ${product.price ? `<p class="text-3xl font-bold text-blue-600 mb-2"><span id="product-price-prefix">${hasVariants ? 'From ' : ''}</span>$<span id="product-price">${Number(product.price).toFixed(2)}</span></p>` : '<p class="text-3xl font-bold text-blue-600 mb-2 hidden" id="product-price-wrap">$<span id="product-price"></span></p>'}
             ${product.min_order_qty ? `<p class="text-gray-500 mb-6">Min. Order: <span id="product-moq">${product.min_order_qty}</span> units</p>` : ''}
             ${variantHtml}
             <button onclick="openInquiry(${product.id})" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-semibold py-3 rounded-lg transition mb-6">Request a Quote</button>
@@ -1410,12 +1441,12 @@ app.get('/product/:slug', async (c) => {
           setText('product-price-prefix', sku ? '' : 'From ');
           if (sku) {
             var p = sku.price != null ? sku.price : base.price;
-            if (p != null) { setText('product-price', p); var w = document.getElementById('product-price-wrap'); if (w) w.classList.remove('hidden'); }
+            if (p != null) { setText('product-price', Number(p).toFixed(2)); var w = document.getElementById('product-price-wrap'); if (w) w.classList.remove('hidden'); }
             setText('product-moq', sku.moq != null ? sku.moq : base.moq);
             setText('variant-code', sku.code ? 'SKU: ' + sku.code : '');
             if (main && sku.image) main.src = sku.image;
           } else {
-            if (base.price != null) setText('product-price', base.price);
+            if (base.price != null) setText('product-price', Number(base.price).toFixed(2));
             setText('product-moq', base.moq);
             setText('variant-code', '');
           }
