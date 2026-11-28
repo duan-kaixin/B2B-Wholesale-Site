@@ -311,4 +311,38 @@ admin.get('/stats', async (c) => {
   });
 });
 
+// ===== 报价表（完整信息，仅后台）=====
+admin.get('/quotes', async (c) => {
+  const { results } = await c.env.DB.prepare(
+    `SELECT q.*, c.name AS category_name, p.slug AS product_slug, p.is_active AS product_active
+     FROM quote_items q
+     LEFT JOIN categories c ON c.id = q.category_id
+     LEFT JOIN products p ON p.id = q.product_id
+     ORDER BY q.category_id, q.sort_order, q.id`
+  ).all();
+  return c.json({ success: true, data: results });
+});
+
+admin.put('/quotes/:id', async (c) => {
+  const id = parseInt(c.req.param('id'), 10);
+  const body = await c.req.json().catch(() => ({} as any));
+  const sets: string[] = [];
+  const vals: any[] = [];
+  if (body.show_public !== undefined) { sets.push('show_public = ?'); vals.push(body.show_public ? 1 : 0); }
+  if (body.price_usd !== undefined) {
+    const v = Number(body.price_usd);
+    if (!Number.isFinite(v) || v < 0) return c.json({ success: false, error: 'Invalid price' }, 400);
+    sets.push('price_usd = ?', 'margin_usd = ROUND(? - COALESCE(cost_usd, 0), 2)'); vals.push(v, v);
+  }
+  if (body.moq !== undefined) {
+    const v = parseInt(body.moq, 10);
+    if (!Number.isFinite(v) || v < 1) return c.json({ success: false, error: 'Invalid MOQ' }, 400);
+    sets.push('moq = ?'); vals.push(v);
+  }
+  if (!Number.isFinite(id) || sets.length === 0) return c.json({ success: false, error: 'Nothing to update' }, 400);
+  sets.push("updated_at = datetime('now')");
+  await c.env.DB.prepare(`UPDATE quote_items SET ${sets.join(', ')} WHERE id = ?`).bind(...vals, id).run();
+  return c.json({ success: true });
+});
+
 export default admin;

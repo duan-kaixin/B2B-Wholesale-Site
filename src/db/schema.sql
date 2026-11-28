@@ -406,3 +406,29 @@ INSERT INTO ai_chat_config (is_enabled, welcome_message, system_prompt, model, t
    1,
    0,
    10);
+
+-- 报价表（后台看完整信息；前台 /price-list 只显示品名、美元售价、起订量）
+CREATE TABLE IF NOT EXISTS quote_items (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  sort_order INTEGER DEFAULT 0,
+  category_id INTEGER,
+  rating TEXT,
+  cn_title TEXT,
+  en_name TEXT NOT NULL,
+  supplier TEXT,
+  origin TEXT,
+  cny_price REAL,
+  sales TEXT,
+  repeat_rate REAL,
+  landed_cny REAL,
+  cost_usd REAL,
+  price_usd REAL,
+  margin_usd REAL,
+  moq INTEGER DEFAULT 100,
+  notes TEXT,
+  link_1688 TEXT,
+  product_id INTEGER,
+  show_public INTEGER DEFAULT 1,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);

@@ -5,7 +5,8 @@ let currentLang = localStorage.getItem('adminLang') || 'en';
 const translations = {
   en: {
     login: { title: 'Admin Login', username: 'Username', password: 'Password', loginBtn: 'Login', invalidCreds: 'Invalid username or password', loginFailed: 'Login failed. Please try again.' },
-    nav: { dashboard: 'Dashboard', products: 'Products', categories: 'Categories', slides: 'Slides', solutions: 'Solutions', cases: 'Cases', news: 'News', pages: 'Pages', inquiries: 'Inquiries', leads: 'Leads', settings: 'Settings', seo: 'SEO & JSON-LD', robots: 'Robots.txt', aiChat: 'AI Chat' },
+    nav: { dashboard: 'Dashboard', products: 'Products', categories: 'Categories', slides: 'Slides', solutions: 'Solutions', cases: 'Cases', news: 'News', pages: 'Pages', inquiries: 'Inquiries', leads: 'Leads', quotes: 'Price List', settings: 'Settings', seo: 'SEO & JSON-LD', robots: 'Robots.txt', aiChat: 'AI Chat' },
+    quotes: { title: 'Price List (internal)', viewPublic: 'View public page', allCats: 'All categories', allRatings: 'All ratings', category: 'Category', rating: 'Rating', product: 'Product', supplier: 'Supplier', cny: '1688 price ¥', sales: 'Sales', repeat: 'Repeat', landed: 'Landed ¥', cost: 'Cost $', price: 'Price $', margin: 'Margin $', moq: 'MOQ', listed: 'Listed', isPublic: 'Public', notes: 'Notes', yes: 'Yes', no: 'No', saved: 'Saved', saveFailed: 'Save failed', summary: '{n} items, {l} listed as products, {p} shown on the public price list. Supplier and cost columns are visible only here.' },
     dashboard: { title: 'Dashboard', totalProducts: 'Total Products', totalInquiries: 'Total Inquiries', pendingInquiries: 'Pending Inquiries', totalLeads: 'Total Leads', totalCases: 'Total Cases', totalNews: 'Total News' },
     common: { add: 'Add', edit: 'Edit', delete: 'Delete', save: 'Save', cancel: 'Cancel', actions: 'Actions', status: 'Status', active: 'Active', inactive: 'Inactive', active2: 'Active', inactive2: 'Inactive', featured: 'Featured', name: 'Name', title: 'Title', description: 'Description', image: 'Image', images: 'Images', url: 'URL', slug: 'Slug', sortOrder: 'Sort Order', selectCategory: 'Select Category', parent: 'Parent', noParent: 'No Parent', createdAt: 'Created', updatedAt: 'Updated', confirmDelete: 'Are you sure?', deleteSuccess: 'Deleted successfully', saveSuccess: 'Saved successfully', error: 'Error', loading: 'Loading...', noData: 'No data', viewAll: 'View All', addNew: 'Add New', uploadImage: 'Upload Image', imageUrl: 'Image URL', upload: 'Upload', logout: 'Logout', clearCache: 'Clear Cache', cacheCleared: 'Cache cleared successfully', cacheClearFailed: 'Failed to clear cache' },
     products: { title: 'Products', addProduct: 'Add Product', editProduct: 'Edit Product', productName: 'Product Name', shortDescription: 'Short Description', fullDescription: 'Full Description', price: 'Price', moq: 'MOQ (Min Order Qty)', category: 'Category', allCategories: 'All Categories', search: 'Search products...' },
@@ -25,7 +26,8 @@ const translations = {
   },
   zh: {
     login: { title: '管理员登录', username: '用户名', password: '密码', loginBtn: '登录', invalidCreds: '用户名或密码错误', loginFailed: '登录失败，请重试' },
-    nav: { dashboard: '仪表盘', products: '产品', categories: '分类', slides: '幻灯片', solutions: '解决方案', cases: '案例', news: '新闻', pages: '页面', inquiries: '询盘', leads: '潜在客户', settings: '设置', seo: 'SEO 和 JSON-LD', robots: 'Robots.txt', aiChat: 'AI 客服' },
+    nav: { dashboard: '仪表盘', products: '产品', categories: '分类', slides: '幻灯片', solutions: '解决方案', cases: '案例', news: '新闻', pages: '页面', inquiries: '询盘', leads: '潜在客户', quotes: '报价表', settings: '设置', seo: 'SEO 和 JSON-LD', robots: 'Robots.txt', aiChat: 'AI 客服' },
+    quotes: { title: '报价表（内部完整版）', viewPublic: '查看客户版页面', allCats: '全部分类', allRatings: '全部建议', category: '分类', rating: '建议', product: '产品', supplier: '供应商', cny: '1688 起价 ¥', sales: '销量', repeat: '回头率', landed: '到手成本 ¥', cost: '成本 $', price: '售价 $', margin: '毛利 $', moq: '起订量', listed: '已上架', isPublic: '客户可见', notes: '备注', yes: '是', no: '否', saved: '已保存', saveFailed: '保存失败', summary: '共 {n} 款，其中 {l} 款已上架为产品，{p} 款显示在客户版报价单。供应商和成本只在这里显示。' },
     dashboard: { title: '仪表盘', totalProducts: '产品总数', totalInquiries: '询盘总数', pendingInquiries: '待处理询盘', totalLeads: '潜在客户', totalCases: '案例总数', totalNews: '新闻总数' },
     common: { add: '添加', edit: '编辑', delete: '删除', save: '保存', cancel: '取消', actions: '操作', status: '状态', active: '启用', inactive: '禁用', active2: '启用中', inactive2: '已禁用', featured: '推荐', name: '名称', title: '标题', description: '描述', image: '图片', images: '图片', url: '链接', slug: '别名', sortOrder: '排序', selectCategory: '选择分类', parent: '父级', noParent: '无父级', createdAt: '创建时间', updatedAt: '更新时间', confirmDelete: '确定要删除吗？', deleteSuccess: '删除成功', saveSuccess: '保存成功', error: '错误', loading: '加载中...', noData: '暂无数据', viewAll: '查看全部', addNew: '新增', uploadImage: '上传图片', imageUrl: '图片地址', upload: '上传', logout: '退出登录', clearCache: '清除缓存', cacheCleared: '缓存已清除成功', cacheClearFailed: '清除缓存失败' },
     products: { title: '产品', addProduct: '添加产品', editProduct: '编辑产品', productName: '产品名称', shortDescription: '简短描述', fullDescription: '完整描述', price: '价格', moq: '最小起订量', category: '分类', allCategories: '全部分类', search: '搜索产品...' },
@@ -194,6 +196,7 @@ function switchPage(page) {
   else if (page === 'pages') loadPages();
   else if (page === 'inquiries') loadInquiries();
   else if (page === 'leads') loadLeads();
+  else if (page === 'quotes') loadQuotes();
   else if (page === 'settings') loadSettings();
   else if (page === 'slides') {
     loadSlides();
@@ -2382,3 +2385,104 @@ window.previewRobots = async function () {
     else alert(text);
   } catch (err) { alert(t('common.error')); }
 };
+
+
+// ===== 报价表（内部完整版）=====
+let quoteRows = [];
+
+function quoteEsc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch]);
+}
+
+async function loadQuotes() {
+  const container = document.getElementById('quotes-table');
+  if (!container) return;
+  try {
+    const res = await fetch('/api/admin/quotes', { headers: { 'Authorization': `Basic ${credentials}` } });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || 'load failed');
+    quoteRows = data.data;
+    const cats = [...new Set(quoteRows.map(r => r.category_name).filter(Boolean))];
+    const ratings = [...new Set(quoteRows.map(r => r.rating).filter(Boolean))];
+    $('#quotes-cat').html(`<option value="">${t('quotes.allCats')}</option>` + cats.map(c => `<option>${quoteEsc(c)}</option>`).join('')).off('change').on('change', renderQuotesTable);
+    $('#quotes-rating').html(`<option value="">${t('quotes.allRatings')}</option>` + ratings.map(c => `<option>${quoteEsc(c)}</option>`).join('')).off('change').on('change', renderQuotesTable);
+    renderQuotesTable();
+  } catch (err) {
+    console.error('Failed to load quotes', err);
+    container.innerHTML = '<p class="p-4 text-red-600">Failed to load price list.</p>';
+  }
+}
+
+function renderQuotesTable() {
+  const container = document.getElementById('quotes-table');
+  if (!container) return;
+  const cat = $('#quotes-cat').val();
+  const rating = $('#quotes-rating').val();
+  const rows = quoteRows.filter(r => (!cat || r.category_name === cat) && (!rating || r.rating === rating));
+  const num = (v, d = 2) => (typeof v === 'number' ? v.toFixed(d) : '-');
+  $('#quotes-summary').text(t('quotes.summary')
+    .replace('{n}', quoteRows.length)
+    .replace('{l}', quoteRows.filter(r => r.product_id).length)
+    .replace('{p}', quoteRows.filter(r => r.show_public).length));
+  container.innerHTML = `
+    <table style="min-width:1300px">
+      <thead>
+        <tr>
+          <th>${t('quotes.category')}</th><th>${t('quotes.rating')}</th><th>${t('quotes.product')}</th><th>${t('quotes.supplier')}</th>
+          <th>${t('quotes.cny')}</th><th>${t('quotes.sales')}</th><th>${t('quotes.repeat')}</th><th>${t('quotes.landed')}</th>
+          <th>${t('quotes.cost')}</th><th>${t('quotes.price')}</th><th>${t('quotes.margin')}</th><th>${t('quotes.moq')}</th>
+          <th>${t('quotes.listed')}</th><th>${t('quotes.isPublic')}</th><th>${t('quotes.notes')}</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rows.map(r => `
+          <tr>
+            <td>${quoteEsc((r.category_name || '').replace(/^Solar /, ''))}</td>
+            <td>${quoteEsc(r.rating || '')}</td>
+            <td style="min-width:260px">
+              <div class="font-medium">${quoteEsc(r.en_name)}</div>
+              <div class="text-xs text-gray-500">${r.link_1688 ? `<a href="${quoteEsc(r.link_1688)}" target="_blank" rel="noopener" class="hover:underline">${quoteEsc(r.cn_title || '')}</a>` : quoteEsc(r.cn_title || '')}</div>
+            </td>
+            <td style="min-width:150px">${quoteEsc(r.supplier || '')}<div class="text-xs text-gray-500">${quoteEsc(r.origin || '')}</div></td>
+            <td>${num(r.cny_price)}</td>
+            <td>${quoteEsc(r.sales || '-')}</td>
+            <td>${typeof r.repeat_rate === 'number' ? Math.round(r.repeat_rate * 100) + '%' : '-'}</td>
+            <td>${num(r.landed_cny)}</td>
+            <td>${num(r.cost_usd)}</td>
+            <td><input type="number" step="0.01" min="0" value="${num(r.price_usd)}" class="border border-gray-300 rounded px-1 py-0.5 w-20" onchange="updateQuote(${r.id}, { price_usd: this.value })"></td>
+            <td>${num(r.margin_usd)}</td>
+            <td><input type="number" step="1" min="1" value="${r.moq || ''}" class="border border-gray-300 rounded px-1 py-0.5 w-16" onchange="updateQuote(${r.id}, { moq: this.value })"></td>
+            <td>${r.product_slug ? `<a href="/product/${quoteEsc(r.product_slug)}" target="_blank" class="text-blue-600 hover:underline">${t('quotes.yes')}</a>` : t('quotes.no')}</td>
+            <td><input type="checkbox" ${r.show_public ? 'checked' : ''} onchange="updateQuote(${r.id}, { show_public: this.checked })"></td>
+            <td class="text-xs text-gray-600" style="min-width:180px">${quoteEsc(r.notes || '')}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+async function updateQuote(id, patch) {
+  try {
+    const res = await fetch(`/api/admin/quotes/${id}`, {
+      method: 'PUT',
+      headers: { 'Authorization': `Basic ${credentials}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(patch)
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || 'save failed');
+    showToast(t('quotes.saved'), 'success');
+    await loadQuotesKeepFilters();
+  } catch (err) {
+    showToast(t('quotes.saveFailed'), 'error');
+  }
+}
+
+async function loadQuotesKeepFilters() {
+  const cat = $('#quotes-cat').val();
+  const rating = $('#quotes-rating').val();
+  await loadQuotes();
+  $('#quotes-cat').val(cat);
+  $('#quotes-rating').val(rating);
+  renderQuotesTable();
+}

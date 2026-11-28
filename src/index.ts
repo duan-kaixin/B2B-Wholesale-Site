@@ -155,6 +155,7 @@ function getPageLayout(
         <li><a href="/" class="nav-link font-medium">Home</a></li>
         <li><a href="/about" class="nav-link font-medium">About Us</a></li>
         <li><a href="/products" class="nav-link font-medium">Products</a></li>
+        <li><a href="/price-list" class="nav-link font-medium">Price List</a></li>
         <li><a href="/solutions" class="nav-link font-medium">Solutions</a></li>
         <li><a href="/cases" class="nav-link font-medium">Cases</a></li>
         <li><a href="/news" class="nav-link font-medium">Blogs</a></li>
@@ -188,6 +189,7 @@ function getPageLayout(
           <h4 class="text-lg font-semibold mb-4">Quick Links</h4>
           <ul class="space-y-2">
             <li><a href="/products" class="text-gray-400 hover:text-white">Products</a></li>
+            <li><a href="/price-list" class="text-gray-400 hover:text-white">Price List</a></li>
             <li><a href="/solutions" class="text-gray-400 hover:text-white">Solutions</a></li>
             <li><a href="/cases" class="text-gray-400 hover:text-white">Cases</a></li>
             <li><a href="/news" class="text-gray-400 hover:text-white">Blogs</a></li>
@@ -412,6 +414,7 @@ app.get('/', async (c) => {
         <li><a href="/" class="nav-link font-medium">Home</a></li>
         <li><a href="/about" class="nav-link font-medium">About Us</a></li>
         <li><a href="/products" class="nav-link font-medium">Products</a></li>
+        <li><a href="/price-list" class="nav-link font-medium">Price List</a></li>
         <li><a href="/solutions" class="nav-link font-medium">Solutions</a></li>
         <li><a href="/cases" class="nav-link font-medium">Cases</a></li>
         <li><a href="/news" class="nav-link font-medium">Blogs</a></li>
@@ -583,6 +586,7 @@ app.get('/', async (c) => {
           <h4 class="text-lg font-semibold mb-4">Quick Links</h4>
           <ul class="space-y-2">
             <li><a href="/products" class="text-gray-400 hover:text-white">Products</a></li>
+            <li><a href="/price-list" class="text-gray-400 hover:text-white">Price List</a></li>
             <li><a href="/solutions" class="text-gray-400 hover:text-white">Solutions</a></li>
             <li><a href="/cases" class="text-gray-400 hover:text-white">Cases</a></li>
             <li><a href="/news" class="text-gray-400 hover:text-white">Blogs</a></li>
@@ -781,6 +785,7 @@ app.get('/admin/*', async (c) => {
           <a href="#cases" class="nav-item flex items-center gap-3 px-4 py-3 hover:bg-gray-800 transition" data-i18n="nav.cases"><iconify-icon icon="mdi:briefcase"></iconify-icon> Cases</a>
           <a href="#news" class="nav-item flex items-center gap-3 px-4 py-3 hover:bg-gray-800 transition" data-i18n="nav.news"><iconify-icon icon="mdi:newspaper"></iconify-icon> News</a>
           <a href="#pages" class="nav-item flex items-center gap-3 px-4 py-3 hover:bg-gray-800 transition" data-i18n="nav.pages"><iconify-icon icon="mdi:file-document"></iconify-icon> Pages</a>
+          <a href="#quotes" class="nav-item flex items-center gap-3 px-4 py-3 hover:bg-gray-800 transition" data-i18n="nav.quotes"><iconify-icon icon="mdi:currency-usd"></iconify-icon> Price List</a>
           <a href="#inquiries" class="nav-item flex items-center gap-3 px-4 py-3 hover:bg-gray-800 transition" data-i18n="nav.inquiries"><iconify-icon icon="mdi:email"></iconify-icon> Inquiries</a>
           <a href="#leads" class="nav-item flex items-center gap-3 px-4 py-3 hover:bg-gray-800 transition" data-i18n="nav.leads"><iconify-icon icon="mdi:account-group"></iconify-icon> Leads</a>
           <a href="#settings" class="nav-item flex items-center gap-3 px-4 py-3 hover:bg-gray-800 transition" data-i18n="nav.settings"><iconify-icon icon="mdi:cog"></iconify-icon> Settings</a>
@@ -819,6 +824,18 @@ app.get('/admin/*', async (c) => {
         <div id="news-page" class="page hidden"><div class="flex justify-between items-center mb-4"><h2 class="text-xl font-semibold" data-i18n="news.title">News</h2><button id="add-news-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700" data-i18n="news.addNews">Add News</button></div><div id="news-table"></div></div>
         <div id="pages-page" class="page hidden"><div class="flex justify-between items-center mb-4"><h2 class="text-xl font-semibold" data-i18n="pages.title">Pages</h2></div><div id="pages-table"></div></div>
         <div id="inquiries-page" class="page hidden"><div class="flex justify-between items-center mb-4"><h2 class="text-xl font-semibold" data-i18n="inquiries.title">Inquiries</h2></div><div id="inquiry-table"></div></div>
+        <div id="quotes-page" class="page hidden">
+          <div class="flex flex-wrap justify-between items-center gap-3 mb-4">
+            <h2 class="text-xl font-semibold" data-i18n="quotes.title">Price List</h2>
+            <div class="flex flex-wrap items-center gap-3 text-sm">
+              <select id="quotes-cat" class="border border-gray-300 rounded px-2 py-1"></select>
+              <select id="quotes-rating" class="border border-gray-300 rounded px-2 py-1"></select>
+              <a href="/price-list" target="_blank" class="text-blue-600 hover:underline" data-i18n="quotes.viewPublic">View public page</a>
+            </div>
+          </div>
+          <p id="quotes-summary" class="text-sm text-gray-500 mb-3"></p>
+          <div id="quotes-table" class="table-container" style="overflow-x:auto"></div>
+        </div>
         <div id="leads-page" class="page hidden"><div class="flex justify-between items-center mb-4"><h2 class="text-xl font-semibold" data-i18n="leads.title">Leads</h2></div><div id="leads-table"></div></div>
         <div id="settings-page" class="page hidden">
           <h2 class="text-xl font-semibold mb-4" data-i18n="settings.generalSettings">General Settings</h2><div id="settings-form"></div>
@@ -852,7 +869,7 @@ app.get('/products', async (c) => {
   const contactInfo = await db.getContactInfo();
   const catParam = parseInt(c.req.query('category') || '', 10);
   const activeCat = Number.isFinite(catParam) ? catParam : undefined;
-  const productsData = await db.getProducts(activeCat, 1, 12);
+  const productsData = await db.getProducts(activeCat, 1, 60);
   const categories = await db.getCategories();
 
   const content = `
@@ -887,12 +904,84 @@ app.get('/products', async (c) => {
             </a>
           `).join('') : '<p class="text-gray-500 col-span-full text-center py-8">No products found</p>'}
         </div>
-        ${productsData.total > 12 ? `<div class="mt-8 text-center"><button class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Load More</button></div>` : ''}
+        ${productsData.total > 60 ? `<div class="mt-8 text-center"><button class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Load More</button></div>` : ''}
       </div>
     </section>
   `;
 
   return c.html(getPageLayout('Products', content, settingsData, socialLinks, contactInfo));
+});
+
+// 客户版报价单：只查询并输出品名、售价、起订量，不涉及供应商和成本字段
+app.get('/price-list', async (c) => {
+  const db = new Database(c.env.DB, c.env.CACHE);
+  const settingsData = await db.getSettings();
+  const socialLinks = await db.getSocialLinks();
+  const contactInfo = await db.getContactInfo();
+  const esc = (s: any) => String(s ?? '').replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' } as any)[ch]);
+  let rows: any[] = [];
+  try {
+    const res = await c.env.DB.prepare(
+      `SELECT q.id, q.en_name, q.category_id, c.name AS category_name,
+              CASE WHEN p.id IS NOT NULL AND p.price > 0 THEN p.price ELSE q.price_usd END AS price,
+              CASE WHEN p.id IS NOT NULL AND p.min_order_qty > 0 THEN p.min_order_qty ELSE q.moq END AS moq,
+              p.slug AS slug, p.images AS images
+       FROM quote_items q
+       JOIN categories c ON c.id = q.category_id AND c.is_active = 1
+       LEFT JOIN products p ON p.id = q.product_id AND p.is_active = 1
+       WHERE q.show_public = 1
+       ORDER BY c.sort_order, c.id, q.sort_order, q.id`
+    ).all();
+    rows = (res.results || []) as any[];
+  } catch (e) {
+    rows = [];
+  }
+  const groups: { name: string; items: any[] }[] = [];
+  for (const r of rows) {
+    let g = groups.find((x) => x.name === r.category_name);
+    if (!g) { g = { name: r.category_name, items: [] }; groups.push(g); }
+    g.items.push(r);
+  }
+  const money = (v: any) => (typeof v === 'number' ? '$' + v.toFixed(2) : '-');
+  const content = `
+    <section class="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-16">
+      <div class="container mx-auto px-4">
+        <h1 class="text-4xl font-bold mb-4">Price List</h1>
+        <p class="text-xl text-blue-100">Reference wholesale prices for our solar lighting range</p>
+      </div>
+    </section>
+    <section class="py-12">
+      <div class="container mx-auto px-4">
+        <p class="text-gray-600 mb-8">Prices are in USD per unit (or per set where stated) and are for reference only. The final quote depends on order quantity, specifications and packaging. <a href="/contact" class="text-blue-600 hover:underline">Contact us</a> for a formal quotation.</p>
+        ${groups.length === 0 ? '<p class="text-gray-500 text-center py-8">Price list is being updated. Please contact us for a quotation.</p>' : groups.map((g) => `
+        <h2 class="text-2xl font-bold mt-10 mb-4">${esc(g.name)}</h2>
+        <div class="overflow-x-auto bg-white rounded-lg shadow">
+          <table class="w-full text-left">
+            <thead class="bg-gray-50 text-gray-600 text-sm">
+              <tr>
+                <th class="px-4 py-3 w-20"></th>
+                <th class="px-4 py-3">Product</th>
+                <th class="px-4 py-3 whitespace-nowrap">Unit Price (USD)</th>
+                <th class="px-4 py-3 whitespace-nowrap">MOQ</th>
+                <th class="px-4 py-3"></th>
+              </tr>
+            </thead>
+            <tbody>
+              ${g.items.map((r: any) => `
+              <tr class="border-t border-gray-100">
+                <td class="px-4 py-2">${r.slug && firstImage(r.images) ? `<img src="${esc(firstImage(r.images))}" alt="" class="w-14 h-14 object-contain" loading="lazy">` : ''}</td>
+                <td class="px-4 py-2 font-medium">${r.slug ? `<a href="/product/${esc(r.slug)}" class="text-blue-600 hover:underline">${esc(r.en_name)}</a>` : esc(r.en_name)}</td>
+                <td class="px-4 py-2 font-semibold whitespace-nowrap">${money(r.price)}</td>
+                <td class="px-4 py-2 whitespace-nowrap">${r.moq ? esc(r.moq) + ' pcs' : '-'}</td>
+                <td class="px-4 py-2 text-right whitespace-nowrap"><a href="/contact?product=${encodeURIComponent(r.en_name)}" class="text-sm text-blue-600 hover:text-blue-800 font-medium">Get Quote</a></td>
+              </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>`).join('')}
+      </div>
+    </section>
+  `;
+  return c.html(getPageLayout('Price List', content, settingsData, socialLinks, contactInfo));
 });
 
 app.get('/solutions', async (c) => {
