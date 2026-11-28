@@ -925,7 +925,7 @@ app.get('/price-list', async (c) => {
       `SELECT q.id, q.en_name, q.category_id, c.name AS category_name,
               CASE WHEN p.id IS NOT NULL AND p.price > 0 THEN p.price ELSE q.price_usd END AS price,
               CASE WHEN p.id IS NOT NULL AND p.min_order_qty > 0 THEN p.min_order_qty ELSE q.moq END AS moq,
-              p.slug AS slug, p.images AS images
+              p.slug AS slug, p.images AS images, q.image AS qimage
        FROM quote_items q
        JOIN categories c ON c.id = q.category_id AND c.is_active = 1
        LEFT JOIN products p ON p.id = q.product_id AND p.is_active = 1
@@ -969,7 +969,7 @@ app.get('/price-list', async (c) => {
             <tbody>
               ${g.items.map((r: any) => `
               <tr class="border-t border-gray-100">
-                <td class="px-4 py-2">${r.slug && firstImage(r.images) ? `<img src="${esc(firstImage(r.images))}" alt="" class="w-14 h-14 object-contain" loading="lazy">` : ''}</td>
+                <td class="px-4 py-2">${(r.slug && firstImage(r.images)) || r.qimage ? `<img src="${esc((r.slug && firstImage(r.images)) || r.qimage)}" alt="${esc(r.en_name)}" class="w-14 h-14 object-contain" loading="lazy">` : ''}</td>
                 <td class="px-4 py-2 font-medium">${r.slug ? `<a href="/product/${esc(r.slug)}" class="text-blue-600 hover:underline">${esc(r.en_name)}</a>` : esc(r.en_name)}</td>
                 <td class="px-4 py-2 font-semibold whitespace-nowrap">${money(r.price)}</td>
                 <td class="px-4 py-2 whitespace-nowrap">${r.moq ? esc(r.moq) + ' pcs' : '-'}</td>

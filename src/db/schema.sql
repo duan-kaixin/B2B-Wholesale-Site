@@ -429,6 +429,7 @@ CREATE TABLE IF NOT EXISTS quote_items (
   link_1688 TEXT,
   product_id INTEGER,
   show_public INTEGER DEFAULT 1,
+  image TEXT,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
