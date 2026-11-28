@@ -66,6 +66,14 @@ app.use('/api/*', cors());
 // （图片读取 /api/upload/image/* 必须公开，否则前台无法展示图片）
 app.use('/api/admin/*', authMiddleware);
 
+// Display helpers: short on-page product title (full name stays in <title>/alt), and sale unit
+const shortName = (n: any): string => {
+  const s = String(n ?? '');
+  return (s.includes(' - ') ? s.split(' - ')[0] : s.split(' with ')[0]).trim();
+};
+const unitOf = (n: any, plural = true): string => (/\b(\d+-pack|pack|set)\b/i.test(String(n ?? '')) ? (plural ? 'sets' : 'set') : (plural ? 'pcs' : 'pc'));
+
+
 // Public base URL: SITE_URL if it is really configured, otherwise the host the visitor used
 const siteBase = (c: any): string => {
   const v = String(c.env.SITE_URL || '');
@@ -925,7 +933,7 @@ app.get('/products', async (c) => {
                 ${firstImage(p.images) ? `<img src="${firstImage(p.images)}" alt="${p.name}" class="max-w-full max-h-full object-contain" loading="lazy">` : '<iconify-icon icon="mdi:package-variant" width="64" class="text-gray-400"></iconify-icon>'}
               </div>
               <div class="p-4">
-                <h3 class="text-lg font-semibold mb-2">${p.name}</h3>
+                <h3 class="text-lg font-semibold mb-2">${shortName(p.name)}</h3>
                 <p class="text-gray-600 text-sm mb-3">${p.short_description || ''}</p>
                 <div class="flex justify-between items-center">
                   ${p.price ? `<span class="text-blue-600 font-bold">$${Number(p.price).toFixed(2)}</span>` : ''}
@@ -983,7 +991,7 @@ app.get('/price-list', async (c) => {
     </section>
     <section class="py-12">
       <div class="container mx-auto px-4">
-        <p class="text-gray-600 mb-8">Prices are in USD per unit (or per set where stated) and are for reference only. The final quote depends on order quantity, specifications and packaging. <a href="/contact" class="text-blue-600 hover:underline">Contact us</a> for a formal quotation.</p>
+        <p class="text-gray-600 mb-8">Prices are EXW China reference prices in USD per piece (or per set where marked). Shipping, duties and custom packaging are not included. The final quote depends on order quantity, specifications and packaging. <a href="/contact" class="text-blue-600 hover:underline">Contact us</a> for a formal quotation.</p>
         ${groups.length === 0 ? '<p class="text-gray-500 text-center py-8">Price list is being updated. Please contact us for a quotation.</p>' : groups.map((g) => `
         <h2 class="text-2xl font-bold mt-10 mb-4">${esc(g.name)}</h2>
         <div class="overflow-x-auto bg-white rounded-lg shadow">
@@ -1002,8 +1010,8 @@ app.get('/price-list', async (c) => {
               <tr class="border-t border-gray-100">
                 <td class="px-4 py-2">${(r.slug && firstImage(r.images)) || r.qimage ? `<img src="${esc((r.slug && firstImage(r.images)) || r.qimage)}" alt="${esc(r.en_name)}" class="w-14 h-14 object-contain" loading="lazy">` : ''}</td>
                 <td class="px-4 py-2 font-medium">${r.slug ? `<a href="/product/${esc(r.slug)}" class="text-blue-600 hover:underline">${esc(r.en_name)}</a>` : esc(r.en_name)}</td>
-                <td class="px-4 py-2 font-semibold whitespace-nowrap">${money(r.price)}</td>
-                <td class="px-4 py-2 whitespace-nowrap">${r.moq ? esc(r.moq) + ' pcs' : '-'}</td>
+                <td class="px-4 py-2 font-semibold whitespace-nowrap">${money(r.price)}${unitOf(r.en_name) === 'sets' && typeof r.price === 'number' ? ' <span class="text-xs font-normal text-gray-500">/ set</span>' : ''}</td>
+                <td class="px-4 py-2 whitespace-nowrap">${r.moq ? esc(r.moq) + ' ' + unitOf(r.en_name) : '-'}</td>
                 <td class="px-4 py-2 text-right whitespace-nowrap"><a href="/contact?product=${encodeURIComponent(r.en_name)}" class="text-sm text-blue-600 hover:text-blue-800 font-medium">Get Quote</a></td>
               </tr>`).join('')}
             </tbody>
@@ -1377,10 +1385,10 @@ app.get('/product/:slug', async (c) => {
     : '<p class="text-gray-500">No specifications provided.</p>';
 
   const content = `
-    ${detailHero(product.name, [
+    ${detailHero(shortName(product.name), [
       { label: 'Products', href: '/products' },
       ...(category ? [{ label: category.name, href: `/products?category=${category.id}` }] : []),
-      { label: product.name },
+      { label: shortName(product.name) },
     ], 'from-blue-600 to-blue-800', product.short_description || '')}
     <section class="py-16">
       <div class="container mx-auto px-4">
@@ -1388,10 +1396,9 @@ app.get('/product/:slug', async (c) => {
           <div>${gallery}</div>
           <div>
             ${category ? `<span class="inline-block bg-blue-100 text-blue-700 text-xs px-3 py-1 rounded-full mb-3">${category.name}</span>` : ''}
-            <h2 class="text-2xl font-bold mb-4">${product.name}</h2>
             <p class="text-gray-600 mb-6">${product.short_description || ''}</p>
             ${product.price ? `<p class="text-3xl font-bold text-blue-600 mb-2"><span id="product-price-prefix">${hasVariants ? 'From ' : ''}</span>$<span id="product-price">${Number(product.price).toFixed(2)}</span></p>` : '<p class="text-3xl font-bold text-blue-600 mb-2 hidden" id="product-price-wrap">$<span id="product-price"></span></p>'}
-            ${product.min_order_qty ? `<p class="text-gray-500 mb-6">Min. Order: <span id="product-moq">${product.min_order_qty}</span> units</p>` : ''}
+            ${product.min_order_qty ? `<p class="text-gray-500 mb-6">Min. Order: <span id="product-moq">${product.min_order_qty}</span> ${unitOf(product.name)}</p>` : ''}
             ${variantHtml}
             <button onclick="openInquiry(${product.id})" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-semibold py-3 rounded-lg transition mb-6">Request a Quote</button>
             <div class="border-t pt-6">

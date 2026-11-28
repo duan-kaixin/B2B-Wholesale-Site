@@ -207,7 +207,7 @@ async function loadProducts() {
             <img src="${product.images?.[0] || '/images/placeholder.png'}" alt="${product.name}" class="max-w-full max-h-full object-contain" loading="lazy" onerror="this.src='/images/placeholder.png'">
           </div>
           <div class="p-6">
-            <h3 class="text-lg font-semibold mb-2">${product.name}</h3>
+            <h3 class="text-lg font-semibold mb-2">${String(product.name || '').includes(' - ') ? String(product.name).split(' - ')[0] : String(product.name || '').split(' with ')[0]}</h3>
             ${product.short_description ? `<p class="text-gray-600 text-sm mb-3 line-clamp-2">${product.short_description}</p>` : ''}
             ${product.price ? `<p class="text-blue-600 font-bold text-xl mb-2">$${Number(product.price).toFixed(2)}</p>` : ''}
             <p class="text-gray-500 text-sm mb-4">MOQ: ${product.min_order_qty} pcs</p>
